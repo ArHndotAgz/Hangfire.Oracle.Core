@@ -18,8 +18,6 @@ namespace Kavosh.Hangfire.Oracle.Core
             DashboardJobListLimit = 50000;
             TransactionTimeout = TimeSpan.FromMinutes(1);
             InvisibilityTimeout = TimeSpan.FromMinutes(30);
-            TableMappings = null; // Will use defaults if null
-            SequenceSettings = new OracleSequenceSettings(); // Default sequences
         }
 
         public IsolationLevel? TransactionIsolationLevel { get; set; }
@@ -45,26 +43,14 @@ namespace Kavosh.Hangfire.Oracle.Core
         }
 
         public bool PrepareSchemaIfNecessary { get; set; }
-
         public TimeSpan JobExpirationCheckInterval { get; set; }
         public TimeSpan CountersAggregateInterval { get; set; }
-
         public int? DashboardJobListLimit { get; set; }
         public TimeSpan TransactionTimeout { get; set; }
         
         [Obsolete("Does not make sense anymore. Background jobs re-queued instantly even after ungraceful shutdown now. Will be removed in 2.0.0.")]
         public TimeSpan InvisibilityTimeout { get; set; }
 
-        public string SchemaName { get; set; }
-
-        /// <summary>
-        /// Custom table mappings configuration. If null, default Hangfire table names will be used.
-        /// </summary>
-        public HangfireTableMappings TableMappings { get; set; }
-
-        /// <summary>
-        /// Custom Oracle sequence names. If null, default HF_SEQUENCE and HF_JOB_ID_SEQ will be used.
-        /// </summary>
-        public OracleSequenceSettings SequenceSettings { get; set; }
+        public HangfireConfiguration Configuration { get; set; }
     }
 }

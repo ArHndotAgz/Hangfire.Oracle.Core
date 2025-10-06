@@ -16,7 +16,7 @@ namespace Kavosh.Hangfire.Oracle.Core
             if (connection == null) throw new ArgumentNullException(nameof(connection));
             if (tableNameProvider == null) throw new ArgumentNullException(nameof(tableNameProvider));
 
-            var schema = tableNameProvider.GetSchemaForTable("Job");
+            var schema = tableNameProvider.GetSchemaName();
 
             if (TablesExists(connection, schema, tableNameProvider))
             {
@@ -49,16 +49,16 @@ namespace Kavosh.Hangfire.Oracle.Core
             if (!string.IsNullOrEmpty(schemaName))
             {
                 tableExistsQuery = $@"
-                            SELECT TABLE_NAME
-                            FROM all_tables
-                            WHERE OWNER = '{schemaName}' AND TABLE_NAME = '{jobTableName}'";
+SELECT TABLE_NAME
+FROM all_tables
+WHERE OWNER = '{schemaName}' AND TABLE_NAME = '{jobTableName}'";
             }
             else
             {
                 tableExistsQuery = $@"
-                                        SELECT TABLE_NAME
-                                        FROM all_tables
-                                        WHERE TABLE_NAME = '{jobTableName}'";
+SELECT TABLE_NAME
+FROM all_tables
+WHERE TABLE_NAME = '{jobTableName}'";
             }
 
             return connection.ExecuteScalar<string>(tableExistsQuery) != null;
@@ -92,7 +92,7 @@ namespace Kavosh.Hangfire.Oracle.Core
             var setTable = tableNameProvider.GetTableName("Set");
             var listTable = tableNameProvider.GetTableName("List");
 
-            // Create sequences with configured names
+            // Create sequences - MUST END WITH SEMICOLON
             sb.AppendLine($"CREATE SEQUENCE {primarySequence} START WITH 1 MAXVALUE 9999999999999999999999999999 MINVALUE 1 NOCYCLE CACHE 20 NOORDER;");
             sb.AppendLine();
             sb.AppendLine($"CREATE SEQUENCE {jobIdSequence} START WITH 1 MAXVALUE 9999999999999999999999999999 MINVALUE 1 NOCYCLE CACHE 20 NOORDER;");
@@ -100,286 +100,286 @@ namespace Kavosh.Hangfire.Oracle.Core
 
             // Job Table
             sb.AppendLine($@"CREATE TABLE {jobTable} (
-                                ID                NUMBER(10),
-                                STATE_ID          NUMBER(10),
-                                STATE_NAME        {varcharType20},
-                                INVOCATION_DATA   {clobType},
-                                ARGUMENTS         {clobType},
-                                CREATED_AT        TIMESTAMP(4),
-                                EXPIRE_AT         TIMESTAMP(4)
-                                )
-                                LOB (INVOCATION_DATA) STORE AS BASICFILE
-                                   (ENABLE STORAGE IN ROW
-                                    CHUNK 8192
-                                    RETENTION
-                                    NOCACHE LOGGING)
-                                LOB (ARGUMENTS) STORE AS BASICFILE
-                                   (ENABLE STORAGE IN ROW
-                                    CHUNK 8192
-                                    RETENTION
-                                    NOCACHE LOGGING)
-                                LOGGING
-                                NOCOMPRESS
-                                NOCACHE
-                                NOPARALLEL
-                                MONITORING;");
+    ID                NUMBER(10),
+    STATE_ID          NUMBER(10),
+    STATE_NAME        {varcharType20},
+    INVOCATION_DATA   {clobType},
+    ARGUMENTS         {clobType},
+    CREATED_AT        TIMESTAMP(4),
+    EXPIRE_AT         TIMESTAMP(4)
+)
+LOB (INVOCATION_DATA) STORE AS BASICFILE
+   (ENABLE STORAGE IN ROW
+    CHUNK 8192
+    RETENTION
+    NOCACHE LOGGING)
+LOB (ARGUMENTS) STORE AS BASICFILE
+   (ENABLE STORAGE IN ROW
+    CHUNK 8192
+    RETENTION
+    NOCACHE LOGGING)
+LOGGING
+NOCOMPRESS
+NOCACHE
+NOPARALLEL
+MONITORING;");
             sb.AppendLine();
 
             sb.AppendLine($@"ALTER TABLE {jobTable} ADD (
-                              PRIMARY KEY (ID)
-                              USING INDEX
-                              ENABLE VALIDATE);");
-                                        sb.AppendLine();
+  PRIMARY KEY (ID)
+  USING INDEX
+  ENABLE VALIDATE);");
+            sb.AppendLine();
 
-                                        // Counter Table
-                                        sb.AppendLine($@"CREATE TABLE {counterTable} (
-                                ID          NUMBER(10),
-                                KEY         {varcharType},
-                                VALUE       NUMBER(10),
-                                EXPIRE_AT   TIMESTAMP(4)
-                            )
-                            LOGGING
-                            NOCOMPRESS
-                            NOCACHE
-                            NOPARALLEL
-                            MONITORING;");
+            // Counter Table
+            sb.AppendLine($@"CREATE TABLE {counterTable} (
+    ID          NUMBER(10),
+    KEY         {varcharType},
+    VALUE       NUMBER(10),
+    EXPIRE_AT   TIMESTAMP(4)
+)
+LOGGING
+NOCOMPRESS
+NOCACHE
+NOPARALLEL
+MONITORING;");
             sb.AppendLine();
 
             sb.AppendLine($@"ALTER TABLE {counterTable} ADD (
-                              PRIMARY KEY (ID)
-                              USING INDEX
-                              ENABLE VALIDATE);");
+  PRIMARY KEY (ID)
+  USING INDEX
+  ENABLE VALIDATE);");
             sb.AppendLine();
 
             // Aggregated Counter Table
             sb.AppendLine($@"CREATE TABLE {aggregatedCounterTable} (
-                                ID          NUMBER(10),
-                                KEY         {varcharType},
-                                VALUE       NUMBER(10),
-                                EXPIRE_AT   TIMESTAMP(4)
-                                )
-                                LOGGING
-                                NOCOMPRESS
-                                NOCACHE
-                                NOPARALLEL
-                                MONITORING;");
+    ID          NUMBER(10),
+    KEY         {varcharType},
+    VALUE       NUMBER(10),
+    EXPIRE_AT   TIMESTAMP(4)
+)
+LOGGING
+NOCOMPRESS
+NOCACHE
+NOPARALLEL
+MONITORING;");
             sb.AppendLine();
 
             sb.AppendLine($@"ALTER TABLE {aggregatedCounterTable} ADD (
-                                  PRIMARY KEY (ID)
-                                  USING INDEX
-                                  ENABLE VALIDATE,
-                                  UNIQUE (KEY)
-                                  USING INDEX
-                                  ENABLE VALIDATE);");
+  PRIMARY KEY (ID)
+  USING INDEX
+  ENABLE VALIDATE,
+  UNIQUE (KEY)
+  USING INDEX
+  ENABLE VALIDATE);");
             sb.AppendLine();
 
             // Distributed Lock Table
             sb.AppendLine($@"CREATE TABLE {distributedLockTable} (
-                                ""RESOURCE"" {varcharType100},
-                                CREATED_AT TIMESTAMP(4)
-                                )
-                                LOGGING
-                                NOCOMPRESS
-                                NOCACHE
-                                NOPARALLEL
-                                MONITORING;");
+    ""RESOURCE"" {varcharType100},
+    CREATED_AT TIMESTAMP(4)
+)
+LOGGING
+NOCOMPRESS
+NOCACHE
+NOPARALLEL
+MONITORING;");
             sb.AppendLine();
 
             // Hash Table
             sb.AppendLine($@"CREATE TABLE {hashTable} (
-                                ID          NUMBER(10),
-                                KEY         {varcharType},
-                                VALUE       {clobType},
-                                EXPIRE_AT   TIMESTAMP(4),
-                                FIELD       {varcharType40}
-                                )
-                                LOB (VALUE) STORE AS BASICFILE
-                                   (ENABLE STORAGE IN ROW
-                                    CHUNK 8192
-                                    RETENTION
-                                    NOCACHE LOGGING)
-                                LOGGING
-                                NOCOMPRESS
-                                NOCACHE
-                                NOPARALLEL
-                                MONITORING;");
+    ID          NUMBER(10),
+    KEY         {varcharType},
+    VALUE       {clobType},
+    EXPIRE_AT   TIMESTAMP(4),
+    FIELD       {varcharType40}
+)
+LOB (VALUE) STORE AS BASICFILE
+   (ENABLE STORAGE IN ROW
+    CHUNK 8192
+    RETENTION
+    NOCACHE LOGGING)
+LOGGING
+NOCOMPRESS
+NOCACHE
+NOPARALLEL
+MONITORING;");
             sb.AppendLine();
 
             sb.AppendLine($@"ALTER TABLE {hashTable} ADD (
-                              PRIMARY KEY (ID)
-                              USING INDEX
-                              ENABLE VALIDATE,
-                              UNIQUE (KEY, FIELD)
-                              USING INDEX
-                              ENABLE VALIDATE);");
+  PRIMARY KEY (ID)
+  USING INDEX
+  ENABLE VALIDATE,
+  UNIQUE (KEY, FIELD)
+  USING INDEX
+  ENABLE VALIDATE);");
             sb.AppendLine();
 
             // Job Parameter Table
             sb.AppendLine($@"CREATE TABLE {jobParameterTable} (
-                                ID       NUMBER(10),
-                                NAME     {varcharType40},
-                                VALUE    {clobType},
-                                JOB_ID   NUMBER(10)
-                                )
-                                LOB (VALUE) STORE AS BASICFILE
-                                   (ENABLE STORAGE IN ROW
-                                    CHUNK 8192
-                                    RETENTION
-                                    NOCACHE LOGGING)
-                                LOGGING
-                                NOCOMPRESS
-                                NOCACHE
-                                NOPARALLEL
-                                MONITORING;");
+    ID       NUMBER(10),
+    NAME     {varcharType40},
+    VALUE    {clobType},
+    JOB_ID   NUMBER(10)
+)
+LOB (VALUE) STORE AS BASICFILE
+   (ENABLE STORAGE IN ROW
+    CHUNK 8192
+    RETENTION
+    NOCACHE LOGGING)
+LOGGING
+NOCOMPRESS
+NOCACHE
+NOPARALLEL
+MONITORING;");
             sb.AppendLine();
 
             sb.AppendLine($@"ALTER TABLE {jobParameterTable} ADD (
-                              PRIMARY KEY (ID)
-                              USING INDEX
-                              ENABLE VALIDATE);");
+  PRIMARY KEY (ID)
+  USING INDEX
+  ENABLE VALIDATE);");
             sb.AppendLine();
 
             sb.AppendLine($@"ALTER TABLE {jobParameterTable} ADD (
-                              CONSTRAINT FK_JOB_PARAMETER_JOB
-                              FOREIGN KEY (JOB_ID)
-                              REFERENCES {jobTable} (ID)
-                              ON DELETE CASCADE ENABLE VALIDATE);");
+  CONSTRAINT FK_JOB_PARAMETER_JOB
+  FOREIGN KEY (JOB_ID)
+  REFERENCES {jobTable} (ID)
+  ON DELETE CASCADE ENABLE VALIDATE);");
             sb.AppendLine();
 
             // Job Queue Table
             sb.AppendLine($@"CREATE TABLE {jobQueueTable} (
-                                ID            NUMBER(10),
-                                JOB_ID        NUMBER(10),
-                                QUEUE         {varcharType50},
-                                FETCHED_AT    TIMESTAMP(4),
-                                FETCH_TOKEN   {varcharType36}
-                                )
-                                LOGGING
-                                NOCOMPRESS
-                                NOCACHE
-                                NOPARALLEL
-                                MONITORING;");
+    ID            NUMBER(10),
+    JOB_ID        NUMBER(10),
+    QUEUE         {varcharType50},
+    FETCHED_AT    TIMESTAMP(4),
+    FETCH_TOKEN   {varcharType36}
+)
+LOGGING
+NOCOMPRESS
+NOCACHE
+NOPARALLEL
+MONITORING;");
             sb.AppendLine();
 
             sb.AppendLine($@"ALTER TABLE {jobQueueTable} ADD (
-                              PRIMARY KEY (ID)
-                              USING INDEX
-                              ENABLE VALIDATE);");
+  PRIMARY KEY (ID)
+  USING INDEX
+  ENABLE VALIDATE);");
             sb.AppendLine();
 
             sb.AppendLine($@"ALTER TABLE {jobQueueTable} ADD (
-                          CONSTRAINT FK_JOB_QUEUE_JOB
-                          FOREIGN KEY (JOB_ID)
-                          REFERENCES {jobTable} (ID)
-                          ON DELETE CASCADE ENABLE VALIDATE);");
+  CONSTRAINT FK_JOB_QUEUE_JOB
+  FOREIGN KEY (JOB_ID)
+  REFERENCES {jobTable} (ID)
+  ON DELETE CASCADE ENABLE VALIDATE);");
             sb.AppendLine();
 
             // Job State Table
             sb.AppendLine($@"CREATE TABLE {jobStateTable} (
-                                ID           NUMBER(10),
-                                JOB_ID       NUMBER(10),
-                                NAME         {varcharType20},
-                                REASON       {varcharType100},
-                                CREATED_AT   TIMESTAMP(4),
-                                DATA         {clobType}
-                                )
-                                LOB (DATA) STORE AS BASICFILE
-                                   (ENABLE STORAGE IN ROW
-                                    CHUNK 8192
-                                    RETENTION
-                                    NOCACHE LOGGING)
-                                LOGGING
-                                NOCOMPRESS
-                                NOCACHE
-                                NOPARALLEL
-                                MONITORING;");
+    ID           NUMBER(10),
+    JOB_ID       NUMBER(10),
+    NAME         {varcharType20},
+    REASON       {varcharType100},
+    CREATED_AT   TIMESTAMP(4),
+    DATA         {clobType}
+)
+LOB (DATA) STORE AS BASICFILE
+   (ENABLE STORAGE IN ROW
+    CHUNK 8192
+    RETENTION
+    NOCACHE LOGGING)
+LOGGING
+NOCOMPRESS
+NOCACHE
+NOPARALLEL
+MONITORING;");
             sb.AppendLine();
 
             sb.AppendLine($@"ALTER TABLE {jobStateTable} ADD (
-                              PRIMARY KEY (ID)
-                              USING INDEX
-                              ENABLE VALIDATE);");
+  PRIMARY KEY (ID)
+  USING INDEX
+  ENABLE VALIDATE);");
             sb.AppendLine();
 
             sb.AppendLine($@"ALTER TABLE {jobStateTable} ADD (
-                                      CONSTRAINT FK_JOB_STATE_JOB
-                                      FOREIGN KEY (JOB_ID)
-                                      REFERENCES {jobTable} (ID)
-                                      ON DELETE CASCADE ENABLE VALIDATE);");
+  CONSTRAINT FK_JOB_STATE_JOB
+  FOREIGN KEY (JOB_ID)
+  REFERENCES {jobTable} (ID)
+  ON DELETE CASCADE ENABLE VALIDATE);");
             sb.AppendLine();
 
             // Server Table
             sb.AppendLine($@"CREATE TABLE {serverTable} (
-                                    ID {varcharType100},
-                                    DATA {clobType},
-                                    LAST_HEART_BEAT TIMESTAMP(4)
-                                    )
-                                    LOB (DATA) STORE AS BASICFILE
-                                       (ENABLE STORAGE IN ROW
-                                        CHUNK 8192
-                                        RETENTION
-                                        NOCACHE LOGGING)
-                                    LOGGING
-                                    NOCOMPRESS
-                                    NOCACHE
-                                    NOPARALLEL
-                                    MONITORING;");
+    ID {varcharType100},
+    DATA {clobType},
+    LAST_HEART_BEAT TIMESTAMP(4)
+)
+LOB (DATA) STORE AS BASICFILE
+   (ENABLE STORAGE IN ROW
+    CHUNK 8192
+    RETENTION
+    NOCACHE LOGGING)
+LOGGING
+NOCOMPRESS
+NOCACHE
+NOPARALLEL
+MONITORING;");
             sb.AppendLine();
 
             sb.AppendLine($@"ALTER TABLE {serverTable} ADD (
-                              PRIMARY KEY (ID)
-                              USING INDEX
-                              ENABLE VALIDATE);");
+  PRIMARY KEY (ID)
+  USING INDEX
+  ENABLE VALIDATE);");
             sb.AppendLine();
 
             // Set Table
             sb.AppendLine($@"CREATE TABLE {setTable} (
-                                ID          NUMBER(10),
-                                KEY         {varcharType},
-                                VALUE       {varcharType},
-                                SCORE       FLOAT(126),
-                                EXPIRE_AT   TIMESTAMP(4)
-                                )
-                                LOGGING
-                                NOCOMPRESS
-                                NOCACHE
-                                NOPARALLEL
-                                MONITORING;");
+    ID          NUMBER(10),
+    KEY         {varcharType},
+    VALUE       {varcharType},
+    SCORE       FLOAT(126),
+    EXPIRE_AT   TIMESTAMP(4)
+)
+LOGGING
+NOCOMPRESS
+NOCACHE
+NOPARALLEL
+MONITORING;");
             sb.AppendLine();
 
             sb.AppendLine($@"ALTER TABLE {setTable} ADD (
-                              PRIMARY KEY (ID)
-                              USING INDEX
-                              ENABLE VALIDATE,
-                              UNIQUE (KEY, VALUE)
-                              USING INDEX
-                              ENABLE VALIDATE);");
+  PRIMARY KEY (ID)
+  USING INDEX
+  ENABLE VALIDATE,
+  UNIQUE (KEY, VALUE)
+  USING INDEX
+  ENABLE VALIDATE);");
             sb.AppendLine();
 
             // List Table
             sb.AppendLine($@"CREATE TABLE {listTable} (
-                                ID          NUMBER(10),
-                                KEY         {varcharType},
-                                VALUE       {clobType},
-                                EXPIRE_AT   TIMESTAMP(4)
-                                )
-                                LOB (VALUE) STORE AS BASICFILE
-                                   (ENABLE STORAGE IN ROW
-                                    CHUNK 8192
-                                    RETENTION
-                                    NOCACHE LOGGING)
-                                LOGGING
-                                NOCOMPRESS
-                                NOCACHE
-                                NOPARALLEL
-                                MONITORING;");
+    ID          NUMBER(10),
+    KEY         {varcharType},
+    VALUE       {clobType},
+    EXPIRE_AT   TIMESTAMP(4)
+)
+LOB (VALUE) STORE AS BASICFILE
+   (ENABLE STORAGE IN ROW
+    CHUNK 8192
+    RETENTION
+    NOCACHE LOGGING)
+LOGGING
+NOCOMPRESS
+NOCACHE
+NOPARALLEL
+MONITORING;");
             sb.AppendLine();
 
             sb.AppendLine($@"ALTER TABLE {listTable} ADD (
-                                  PRIMARY KEY (ID)
-                                  USING INDEX
-                                  ENABLE VALIDATE);");
+  PRIMARY KEY (ID)
+  USING INDEX
+  ENABLE VALIDATE);");
 
             return sb.ToString();
         }

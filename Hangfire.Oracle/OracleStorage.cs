@@ -72,29 +72,13 @@ namespace Kavosh.Hangfire.Oracle.Core
 
         private void InitializeTableNameProvider()
         {
-            var mappings = _options.TableMappings ?? new HangfireTableMappings
-            {
-                DefaultSchema = _options.SchemaName ?? string.Empty,
-                DataTypeSettings = new OracleDataTypeSettings(),
-                SequenceSettings = _options.SequenceSettings ?? new OracleSequenceSettings()
-            };
+            var config = _options.Configuration ?? new HangfireConfiguration();
+            
+            // Ensure all properties are initialized
+            config.Tables = config.Tables ?? new Dictionary<string, string>();
+            config.Sequence = config.Sequence ?? new SequenceConfiguration();
 
-            if (string.IsNullOrEmpty(mappings.DefaultSchema) && !string.IsNullOrEmpty(_options.SchemaName))
-            {
-                mappings.DefaultSchema = _options.SchemaName;
-            }
-
-            if (_options.SequenceSettings != null)
-            {
-                mappings.SequenceSettings = _options.SequenceSettings;
-            }
-
-            if (mappings.SequenceSettings == null)
-            {
-                mappings.SequenceSettings = new OracleSequenceSettings();
-            }
-
-            TableNameProvider = new HangfireTableNameProvider(mappings);
+            TableNameProvider = new HangfireTableNameProvider(config);
         }
 
         private void PrepareSchemaIfNecessary(OracleStorageOptions options)
@@ -123,7 +107,7 @@ namespace Kavosh.Hangfire.Oracle.Core
 
         public override void WriteOptionsToLog(ILog logger)
         {
-            logger.Info("Using the following options for SQL Server job storage:");
+            logger.Info("Using the following options for Oracle job storage:");
             logger.InfoFormat("    Queue poll interval: {0}.", _options.QueuePollInterval);
         }
 
@@ -249,7 +233,7 @@ namespace Kavosh.Hangfire.Oracle.Core
             {
                 connection.Open();
 
-                var schema = TableNameProvider.GetSchemaForTable("Job"); // Get schema from provider
+                var schema = TableNameProvider.GetSchemaName();
                 if (!string.IsNullOrWhiteSpace(schema))
                 {
                     connection.Execute($"ALTER SESSION SET CURRENT_SCHEMA={schema}");

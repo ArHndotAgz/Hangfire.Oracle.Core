@@ -10,8 +10,8 @@
 		<Authors>Amirhossein Aghazadeh</Authors>
 		<Owners>Rayan Pardaz Kavosh</Owners>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
-		<PackageProjectUrl>https://github.com/rayankavosh/Kavosh.Hangfire.Oracle.Core</PackageProjectUrl>
-		<RepositoryUrl>https://github.com/rayankavosh/Kavosh.Hangfire.Oracle.Core</RepositoryUrl>
+		<PackageProjectUrl>https://github.com/ArHndotAgz/Kavosh.Hangfire.Oracle.Core</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/ArHndotAgz/Kavosh.Hangfire.Oracle.Core</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
 		<Copyright>Copyright © 2025 Rayan Pardaz Kavosh - Amirhossein Aghazadeh</Copyright>
 		<PackageTags>Hangfire;Oracle;Hangfire-Oracle;Kavosh;Custom-Tables;Dynamic-Naming;Enterprise;Persian;Farsi;VARCHAR2;CLOB;Schema-Configuration</PackageTags>

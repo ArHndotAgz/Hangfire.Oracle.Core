@@ -7,11 +7,9 @@ namespace Kavosh.Hangfire.Oracle.Core.Configuration
     public static class HangfireConfigurationLoader
     {
         /// <summary>
-        /// Loads Hangfire table mappings from a JSON file.
+        /// Loads Hangfire configuration from a JSON file
         /// </summary>
-        /// <param name="jsonFilePath">Path to the JSON configuration file</param>
-        /// <returns>HangfireTableMappings object</returns>
-        public static HangfireTableMappings LoadFromJson(string jsonFilePath)
+        public static HangfireConfiguration LoadFromJson(string jsonFilePath)
         {
             if (string.IsNullOrWhiteSpace(jsonFilePath))
             {
@@ -24,16 +22,13 @@ namespace Kavosh.Hangfire.Oracle.Core.Configuration
             }
 
             var jsonContent = File.ReadAllText(jsonFilePath);
-            
             return DeserializeFromJson(jsonContent);
         }
 
         /// <summary>
-        /// Loads Hangfire table mappings from JSON string content.
+        /// Deserializes Hangfire configuration from JSON string
         /// </summary>
-        /// <param name="jsonContent">JSON configuration content</param>
-        /// <returns>HangfireTableMappings object</returns>
-        public static HangfireTableMappings DeserializeFromJson(string jsonContent)
+        public static HangfireConfiguration DeserializeFromJson(string jsonContent)
         {
             if (string.IsNullOrWhiteSpace(jsonContent))
             {
@@ -42,54 +37,41 @@ namespace Kavosh.Hangfire.Oracle.Core.Configuration
 
             try
             {
-                // Using Newtonsoft.Json for .NET Standard 2.0 compatibility
                 var settings = new JsonSerializerSettings
                 {
                     MissingMemberHandling = MissingMemberHandling.Ignore,
                     NullValueHandling = NullValueHandling.Ignore
                 };
 
-                var mappings = JsonConvert.DeserializeObject<HangfireTableMappings>(jsonContent, settings);
+                var config = JsonConvert.DeserializeObject<HangfireConfiguration>(jsonContent, settings);
 
-                if (mappings == null)
+                if (config == null)
                 {
-                    throw new InvalidOperationException("Failed to deserialize Hangfire table mappings from JSON.");
+                    throw new InvalidOperationException("Failed to deserialize Hangfire configuration.");
                 }
 
-                // Validate configuration
-                ValidateConfiguration(mappings);
+                ValidateAndInitialize(config);
 
-                return mappings;
+                return config;
             }
             catch (JsonException ex)
             {
-                throw new InvalidOperationException("Invalid JSON format for Hangfire table mappings.", ex);
+                throw new InvalidOperationException("Invalid JSON format for Hangfire configuration.", ex);
             }
         }
 
-        private static void ValidateConfiguration(HangfireTableMappings mappings)
+        private static void ValidateAndInitialize(HangfireConfiguration config)
         {
-            if (mappings.Tables == null)
-            {
-                mappings.Tables = new System.Collections.Generic.Dictionary<string, HangfireTableInfo>();
-            }
+            // Initialize if null
+            config.Tables = config.Tables ?? new System.Collections.Generic.Dictionary<string, string>();
+            config.Sequence = config.Sequence ?? new SequenceConfiguration();
 
-            if (mappings.DataTypeSettings == null)
+            // Validate table names
+            foreach (var table in config.Tables)
             {
-                mappings.DataTypeSettings = new OracleDataTypeSettings();
-            }
-
-            // Ensure all table names are properly set
-            foreach (var kvp in mappings.Tables)
-            {
-                if (kvp.Value == null)
+                if (string.IsNullOrWhiteSpace(table.Value))
                 {
-                    throw new InvalidOperationException($"Table info for '{kvp.Key}' cannot be null.");
-                }
-
-                if (string.IsNullOrWhiteSpace(kvp.Value.TableName))
-                {
-                    throw new InvalidOperationException($"Table name for '{kvp.Key}' cannot be null or empty.");
+                    throw new InvalidOperationException($"Table name for '{table.Key}' cannot be null or empty.");
                 }
             }
         }
