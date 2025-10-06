@@ -2,18 +2,16 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-
 using Dapper;
-
 using Hangfire.Annotations;
 using Hangfire.Common;
-using Hangfire.Oracle.Core.Entities;
-using Hangfire.Oracle.Core.JobQueue;
 using Hangfire.States;
 using Hangfire.Storage;
 using Hangfire.Storage.Monitoring;
+using Kavosh.Hangfire.Oracle.Core.Entities;
+using Kavosh.Hangfire.Oracle.Core.JobQueue;
 
-namespace Hangfire.Oracle.Core.Monitoring
+namespace Kavosh.Hangfire.Oracle.Core.Monitoring
 {
     internal class OracleMonitoringApi : IMonitoringApi
     {

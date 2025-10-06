@@ -1,11 +1,20 @@
-﻿@echo off
+﻿﻿@echo off
 setlocal enabledelayedexpansion
 
 REM Kavosh.Hangfire.Oracle.Core Build & Package Script
 set Configuration=Release
 set OutputPath=.\nupkg
-set Version=2.0.0
+set Version=1.0.0
 set ProjectFile=Kavosh.Hangfire.Oracle.Core.csproj
+
+echo ====================================
+echo Kavosh.Hangfire.Oracle.Core
+echo Build ^& Package Script v%Version%
+echo By: Amirhossein Aghazadeh
+echo Company: Rayan Pardaz Kavosh
+echo ====================================
+echo.
+
 
 echo ================================
 echo Kavosh.Hangfire.Oracle.Core

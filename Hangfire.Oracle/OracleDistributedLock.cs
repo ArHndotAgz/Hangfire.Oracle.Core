@@ -1,12 +1,10 @@
 using System;
 using System.Data;
 using System.Threading;
-
 using Dapper;
-
 using Hangfire.Logging;
 
-namespace Hangfire.Oracle.Core
+namespace Kavosh.Hangfire.Oracle.Core
 {
     public class OracleDistributedLock : IDisposable, IComparable
     {

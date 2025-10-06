@@ -3,7 +3,7 @@ using System.Threading;
 
 using Hangfire.Storage;
 
-namespace Hangfire.Oracle.Core.JobQueue
+namespace Kavosh.Hangfire.Oracle.Core.JobQueue
 {
     public interface IPersistentJobQueue
     {

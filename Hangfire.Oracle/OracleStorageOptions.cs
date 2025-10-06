@@ -1,8 +1,8 @@
+using Kavosh.Hangfire.Oracle.Core.Configuration;
 using System;
 using System.Data;
-using Hangfire.Oracle.Core.Configuration;
 
-namespace Hangfire.Oracle.Core
+namespace Kavosh.Hangfire.Oracle.Core
 {
     public class OracleStorageOptions
     {
@@ -19,6 +19,7 @@ namespace Hangfire.Oracle.Core
             TransactionTimeout = TimeSpan.FromMinutes(1);
             InvisibilityTimeout = TimeSpan.FromMinutes(30);
             TableMappings = null; // Will use defaults if null
+            SequenceSettings = new OracleSequenceSettings(); // Default sequences
         }
 
         public IsolationLevel? TransactionIsolationLevel { get; set; }
@@ -60,5 +61,10 @@ namespace Hangfire.Oracle.Core
         /// Custom table mappings configuration. If null, default Hangfire table names will be used.
         /// </summary>
         public HangfireTableMappings TableMappings { get; set; }
+
+        /// <summary>
+        /// Custom Oracle sequence names. If null, default HF_SEQUENCE and HF_JOB_ID_SEQ will be used.
+        /// </summary>
+        public OracleSequenceSettings SequenceSettings { get; set; }
     }
 }

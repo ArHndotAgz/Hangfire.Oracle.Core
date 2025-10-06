@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Hangfire.Oracle.Core.Configuration
+namespace Kavosh.Hangfire.Oracle.Core.Configuration
 {
     public class HangfireTableNameProvider
     {
@@ -11,33 +11,33 @@ namespace Hangfire.Oracle.Core.Configuration
         public HangfireTableNameProvider(HangfireTableMappings mappings)
         {
             _mappings = mappings ?? throw new ArgumentNullException(nameof(mappings));
-            
+
             _defaultTableNames = new Dictionary<string, string>
             {
-                { "Job", "HHF_JOB" },
-                { "JobParameter", "HHF_JOB_PARAMETER" },
-                { "JobQueue", "HHF_JOB_QUEUE" },
-                { "JobState", "HHF_JOB_STATE" },
-                { "Server", "HHF_SERVER" },
-                { "Set", "HHF_SET" },
-                { "List", "HHF_LIST" },
-                { "Hash", "HHF_HASH" },
-                { "Counter", "HHF_COUNTER" },
-                { "AggregatedCounter", "HHF_AGGREGATED_COUNTER" },
-                { "DistributedLock", "HHF_DISTRIBUTED_LOCK" }
+                { "Job", "HF_JOB" },
+                { "JobParameter", "HF_JOB_PARAMETER" },
+                { "JobQueue", "HF_JOB_QUEUE" },
+                { "JobState", "HF_JOB_STATE" },
+                { "Server", "HF_SERVER" },
+                { "Set", "HF_SET" },
+                { "List", "HF_LIST" },
+                { "Hash", "HF_HASH" },
+                { "Counter", "HF_COUNTER" },
+                { "AggregatedCounter", "HF_AGGREGATED_COUNTER" },
+                { "DistributedLock", "HF_DISTRIBUTED_LOCK" }
             };
         }
 
         public string GetTableName(string logicalName)
         {
-            if (_mappings.Tables.TryGetValue(logicalName, out var tableInfo) && 
+            if (_mappings.Tables.TryGetValue(logicalName, out var tableInfo) &&
                 !string.IsNullOrEmpty(tableInfo.TableName))
             {
                 return tableInfo.TableName;
             }
 
-            return _defaultTableNames.TryGetValue(logicalName, out var defaultName) 
-                ? defaultName 
+            return _defaultTableNames.TryGetValue(logicalName, out var defaultName)
+                ? defaultName
                 : logicalName;
         }
 
@@ -46,14 +46,14 @@ namespace Hangfire.Oracle.Core.Configuration
             var tableName = GetTableName(logicalName);
             var schema = GetSchemaForTable(logicalName);
 
-            return string.IsNullOrEmpty(schema) 
-                ? tableName 
+            return string.IsNullOrEmpty(schema)
+                ? tableName
                 : $"{schema}.{tableName}";
         }
 
         public string GetSchemaForTable(string logicalName)
         {
-            if (_mappings.Tables.TryGetValue(logicalName, out var tableInfo) && 
+            if (_mappings.Tables.TryGetValue(logicalName, out var tableInfo) &&
                 !string.IsNullOrEmpty(tableInfo.Schema))
             {
                 return tableInfo.Schema;
@@ -69,9 +69,19 @@ namespace Hangfire.Oracle.Core.Configuration
 
         public string GetVarcharType(int size)
         {
-            return _mappings.DataTypeSettings.UseNationalCharacterSet 
-                ? $"NVARCHAR2({size})" 
+            return _mappings.DataTypeSettings.UseNationalCharacterSet
+                ? $"NVARCHAR2({size})"
                 : $"VARCHAR2({size})";
+        }
+
+        public string GetPrimarySequenceName()
+        {
+            return _mappings.SequenceSettings?.PrimarySequenceName ?? "HF_SEQUENCE";
+        }
+
+        public string GetJobIdSequenceName()
+        {
+            return _mappings.SequenceSettings?.JobIdSequenceName ?? "HF_JOB_ID_SEQ";
         }
     }
 }

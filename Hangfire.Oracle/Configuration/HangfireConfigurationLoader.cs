@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using Newtonsoft.Json;
 
-namespace Hangfire.Oracle.Core.Configuration
+namespace Kavosh.Hangfire.Oracle.Core.Configuration
 {
     public static class HangfireConfigurationLoader
     {

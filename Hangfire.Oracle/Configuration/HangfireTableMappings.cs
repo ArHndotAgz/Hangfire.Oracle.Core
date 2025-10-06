@@ -1,12 +1,13 @@
 using System.Collections.Generic;
 
-namespace Hangfire.Oracle.Core.Configuration
+namespace Kavosh.Hangfire.Oracle.Core.Configuration
 {
     public class HangfireTableMappings
     {
         public string DefaultSchema { get; set; } = string.Empty;
         public Dictionary<string, HangfireTableInfo> Tables { get; set; } = new Dictionary<string, HangfireTableInfo>();
         public OracleDataTypeSettings DataTypeSettings { get; set; } = new OracleDataTypeSettings();
+        public OracleSequenceSettings SequenceSettings { get; set; } = new OracleSequenceSettings();
     }
 
     public class HangfireTableInfo
@@ -17,6 +18,10 @@ namespace Hangfire.Oracle.Core.Configuration
 
     public class OracleDataTypeSettings
     {
-        public bool UseNationalCharacterSet { get; set; } = false; // false = use VARCHAR2/CLOB instead of NVARCHAR2/NCLOB
+        /// <summary>
+        /// Use National Character Set (NVARCHAR2/NCLOB). Default: false (uses VARCHAR2/CLOB)
+        /// Set to true for full Unicode support including Persian characters.
+        /// </summary>
+        public bool UseNationalCharacterSet { get; set; } = false;
     }
 }

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 using Hangfire.Logging;
 
-namespace Hangfire.Oracle.Core.JobQueue
+namespace Kavosh.Hangfire.Oracle.Core.JobQueue
 {
     public class PersistentJobQueueProviderCollection : IEnumerable<IPersistentJobQueueProvider>
     {

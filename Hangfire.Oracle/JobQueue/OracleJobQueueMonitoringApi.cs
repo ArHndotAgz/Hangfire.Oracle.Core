@@ -1,10 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-
 using Dapper;
 
-namespace Hangfire.Oracle.Core.JobQueue
+namespace Kavosh.Hangfire.Oracle.Core.JobQueue
 {
     internal class OracleJobQueueMonitoringApi : IPersistentJobQueueMonitoringApi
     {
@@ -48,7 +47,7 @@ namespace Hangfire.Oracle.Core.JobQueue
                 SELECT JOB_ID AS JobId
                 FROM (SELECT JOB_ID, RANK() OVER (ORDER BY ID) AS RANK
                       FROM {T("JobQueue")}
-                      WHERE QUEUE = :QUEUE)
+                      WHERE QUEUE = :QUEUE AND FETCHED_AT IS NULL)
                 WHERE RANK BETWEEN :S AND :E";
 
             return _storage.UseConnection(connection =>
@@ -60,8 +59,8 @@ namespace Hangfire.Oracle.Core.JobQueue
             var sqlQuery = $@"
                 SELECT JOB_ID AS JobId
                 FROM (SELECT JOB_ID, RANK() OVER (ORDER BY ID) AS RANK
-                      FROM {T("FetchingJobQueue")}
-                      WHERE QUEUE = :QUEUE)
+                      FROM {T("JobQueue")}
+                      WHERE QUEUE = :QUEUE AND FETCHED_AT IS NOT NULL)
                 WHERE RANK BETWEEN :S AND :E";
 
             return _storage.UseConnection(connection =>
@@ -73,11 +72,11 @@ namespace Hangfire.Oracle.Core.JobQueue
             return _storage.UseConnection(connection =>
             {
                 var enqueuedCount = connection.QuerySingle<int>(
-                    $"SELECT COUNT(ID) FROM {T("JobQueue")} WHERE QUEUE = :QUEUE", 
+                    $"SELECT COUNT(ID) FROM {T("JobQueue")} WHERE QUEUE = :QUEUE AND FETCHED_AT IS NULL", 
                     new { QUEUE = queue });
 
                 var fetchedCount = connection.QuerySingle<int>(
-                    $"SELECT COUNT(ID) FROM {T("FetchingJobQueue")} WHERE QUEUE = :QUEUE", 
+                    $"SELECT COUNT(ID) FROM {T("JobQueue")} WHERE QUEUE = :QUEUE AND FETCHED_AT IS NOT NULL", 
                     new { QUEUE = queue });
 
                 return new EnqueuedAndFetchedCountDto

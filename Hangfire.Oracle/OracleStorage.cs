@@ -4,17 +4,17 @@ using System.Data;
 using System.Linq;
 using System.Text;
 using Dapper;
+using Hangfire;
 using Hangfire.Annotations;
 using Hangfire.Logging;
-using Hangfire.Oracle.Core.Configuration;
-using Hangfire.Oracle.Core.JobQueue;
-using Hangfire.Oracle.Core.Monitoring;
 using Hangfire.Server;
 using Hangfire.Storage;
-
+using Kavosh.Hangfire.Oracle.Core.Configuration;
+using Kavosh.Hangfire.Oracle.Core.JobQueue;
+using Kavosh.Hangfire.Oracle.Core.Monitoring;
 using Oracle.ManagedDataAccess.Client;
 
-namespace Hangfire.Oracle.Core
+namespace Kavosh.Hangfire.Oracle.Core
 {
     public class OracleStorage : JobStorage, IDisposable
     {

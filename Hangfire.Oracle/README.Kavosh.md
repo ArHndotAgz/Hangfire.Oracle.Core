@@ -1,21 +1,24 @@
 ﻿# Kavosh.Hangfire.Oracle.Core
 
-A customized fork of Hangfire.Oracle.Core with support for **dynamic table naming** and **configurable Oracle data types**.
+[![NuGet Version](https://img.shields.io/nuget/v/Kavosh.Hangfire.Oracle.Core.svg)](https://www.nuget.org/packages/Kavosh.Hangfire.Oracle.Core/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## Why This Fork?
+A customized and enhanced fork of **Hangfire.Oracle.Core** with support for **dynamic table naming**, **configurable schemas**, **custom Oracle data types**, and **full Persian language support**.
 
-This fork was created to address enterprise requirements where:
-- Database table names must follow specific naming conventions
-- Schema names need to be configurable
-- Oracle data types (NVARCHAR2 vs VARCHAR2, NCLOB vs CLOB) need to be controllable
-- Tables must be created with company-specific prefixes
+## 🎯 Why This Fork?
 
-## Key Features
+This fork was created to address enterprise requirements where organizations need:
 
-✅ **Dynamic Table Naming** - Configure custom table names via JSON or code  
-✅ **Schema Configuration** - Set Oracle schema via environment variables or config  
-✅ **Data Type Control** - Choose between NVARCHAR2/VARCHAR2 and NCLOB/CLOB  
-✅ **Backward Compatible** - Works with default Hangfire table names if not configured  
-✅ **Enterprise Ready** - Supports company naming conventions and standards  
+✅ **Custom Table Naming** - Follow company database naming conventions  
+✅ **Configurable Schemas** - Organize tables across multiple schemas  
+✅ **Data Type Control** - Choose VARCHAR2/NVARCHAR2, CLOB/NCLOB  
+✅ **Persian Language Support** - Full UTF-8 Unicode support for Farsi text  
+✅ **Sequence Configuration** - Custom sequence names to avoid conflicts  
+✅ **Security Updates** - Latest Oracle driver without vulnerabilities  
+✅ **Enterprise Ready** - Battle-tested in production environments  
 
-## Installation
+---
+
+## 📦 Installation
+
+### Via NuGet Package Manager

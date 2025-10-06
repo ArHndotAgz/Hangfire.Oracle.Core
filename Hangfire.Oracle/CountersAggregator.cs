@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Threading;
-
 using Dapper;
-
 using Hangfire.Logging;
 using Hangfire.Server;
 
-namespace Hangfire.Oracle.Core
+namespace Kavosh.Hangfire.Oracle.Core
 {
 #pragma warning disable 618
     internal class CountersAggregator : IServerComponent

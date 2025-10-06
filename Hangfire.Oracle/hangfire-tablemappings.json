@@ -1,41 +1,46 @@
 {
   "DefaultSchema": "ESTCAD",
-  "Tables": {
-    "Job": {
-      "TableName": "HNGF_TB_JOB"
-    },
-    "JobParameter": {
-      "TableName": "HNGF_TB_JOB_PARAMETER"
-    },
-    "JobQueue": {
-      "TableName": "HNGF_TB_JOB_QUEUE"
-    },
-    "JobState": {
-      "TableName": "HNGF_TB_JOB_STATE"
-    },
-    "Server": {
-      "TableName": "HNGF_TB_SERVER"
-    },
-    "Set": {
-      "TableName": "HNGF_TB_SET"
-    },
-    "List": {
-      "TableName": "HNGF_TB_LIST"
-    },
-    "Hash": {
-      "TableName": "HNGF_TB_HASH"
-    },
-    "Counter": {
-      "TableName": "HNGF_TB_COUNTER"
-    },
-    "AggregatedCounter": {
-      "TableName": "HNGF_TB_AGGREGATED_COUNTER"
-    },
-    "DistributedLock": {
-      "TableName": "HNGF_TB_DISTRIBUTED_LOCK"
-    }
-  },
   "DataTypeSettings": {
     "UseNationalCharacterSet": false
+  },
+  "SequenceSettings": {
+    "PrimarySequenceName": "HF_SEQUENCE",
+    "JobIdSequenceName": "HF_JOB_ID_SEQ"
+  },
+  "Tables": {
+    "Job": {
+      "TableName": "HF_JOB",
+      "Schema": "ESTCAD"
+    },
+    "JobParameter": {
+      "TableName": "HF_JOB_PARAMETER"
+    },
+    "JobQueue": {
+      "TableName": "HF_JOB_QUEUE"
+    },
+    "JobState": {
+      "TableName": "HF_JOB_STATE"
+    },
+    "Server": {
+      "TableName": "HF_SERVER"
+    },
+    "Set": {
+      "TableName": "HF_SET"
+    },
+    "List": {
+      "TableName": "HF_LIST"
+    },
+    "Hash": {
+      "TableName": "HF_HASH"
+    },
+    "Counter": {
+      "TableName": "HF_COUNTER"
+    },
+    "AggregatedCounter": {
+      "TableName": "HF_AGGREGATED_COUNTER"
+    },
+    "DistributedLock": {
+      "TableName": "HF_DISTRIBUTED_LOCK"
+    }
   }
 }

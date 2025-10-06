@@ -1,13 +1,11 @@
 ﻿using System;
 using System.Data;
 using System.Globalization;
-
 using Dapper;
-
 using Hangfire.Logging;
 using Hangfire.Storage;
 
-namespace Hangfire.Oracle.Core.JobQueue
+namespace Kavosh.Hangfire.Oracle.Core.JobQueue
 {
     internal class OracleFetchedJob : IFetchedJob
     {

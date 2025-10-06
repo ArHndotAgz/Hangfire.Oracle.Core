@@ -3,9 +3,9 @@ using System.Data;
 using System.Text;
 using Dapper;
 using Hangfire.Logging;
-using Hangfire.Oracle.Core.Configuration;
+using Kavosh.Hangfire.Oracle.Core.Configuration;
 
-namespace Hangfire.Oracle.Core
+namespace Kavosh.Hangfire.Oracle.Core
 {
     public static class OracleObjectsInstaller
     {
