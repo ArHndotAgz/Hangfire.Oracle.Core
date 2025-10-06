@@ -4,7 +4,7 @@ setlocal enabledelayedexpansion
 REM Kavosh.Hangfire.Oracle.Core Build & Package Script
 set Configuration=Release
 set OutputPath=.\nupkg
-set Version=1.0.0
+set Version=1.0.1
 set ProjectFile=Kavosh.Hangfire.Oracle.Core.csproj
 
 echo ====================================

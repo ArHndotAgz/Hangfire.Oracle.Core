@@ -75,13 +75,23 @@ namespace Kavosh.Hangfire.Oracle.Core
             var mappings = _options.TableMappings ?? new HangfireTableMappings
             {
                 DefaultSchema = _options.SchemaName ?? string.Empty,
-                DataTypeSettings = new OracleDataTypeSettings { UseNationalCharacterSet = false }
+                DataTypeSettings = new OracleDataTypeSettings(),
+                SequenceSettings = _options.SequenceSettings ?? new OracleSequenceSettings()
             };
 
-            // Ensure schema is set from SchemaName if not in mappings
             if (string.IsNullOrEmpty(mappings.DefaultSchema) && !string.IsNullOrEmpty(_options.SchemaName))
             {
                 mappings.DefaultSchema = _options.SchemaName;
+            }
+
+            if (_options.SequenceSettings != null)
+            {
+                mappings.SequenceSettings = _options.SequenceSettings;
+            }
+
+            if (mappings.SequenceSettings == null)
+            {
+                mappings.SequenceSettings = new OracleSequenceSettings();
             }
 
             TableNameProvider = new HangfireTableNameProvider(mappings);

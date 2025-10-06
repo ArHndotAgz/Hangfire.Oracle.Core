@@ -26,6 +26,8 @@ namespace Kavosh.Hangfire.Oracle.Core
 
         private string T(string logicalName) => _storage.TableNameProvider.GetTableName(logicalName);
         private string GetClobType() => _storage.TableNameProvider.GetClobType();
+        private string GetPrimarySequence() => _storage.TableNameProvider.GetPrimarySequenceName();
+        private string GetJobIdSequence() => _storage.TableNameProvider.GetJobIdSequenceName();
 
         public override IWriteOnlyTransaction CreateWriteTransaction()
         {
@@ -57,7 +59,7 @@ namespace Kavosh.Hangfire.Oracle.Core
 
             return _storage.UseConnection(connection =>
             {
-                var jobId = connection.GetNextJobId();
+                var jobId = connection.GetNextJobId(GetJobIdSequence());
 
                 var oracleDynamicParameters = new OracleDynamicParameters();
                 oracleDynamicParameters.AddDynamicParams(new
@@ -91,7 +93,7 @@ namespace Kavosh.Hangfire.Oracle.Core
                         parameterArray[parameterIndex++] = dynamicParameters;
                     }
 
-                    connection.Execute($"INSERT INTO {T("JobParameter")} (ID, NAME, VALUE, JOB_ID) VALUES (HF_SEQUENCE.NEXTVAL, :NAME, :VALUE, :JOB_ID)", parameterArray);
+                    connection.Execute($"INSERT INTO {T("JobParameter")} (ID, NAME, VALUE, JOB_ID) VALUES ({GetPrimarySequence()}.NEXTVAL, :NAME, :VALUE, :JOB_ID)", parameterArray);
                 }
 
                 return jobId.ToString();
@@ -145,7 +147,7 @@ namespace Kavosh.Hangfire.Oracle.Core
                            UPDATE SET VALUE = :VALUE
                        WHEN NOT MATCHED THEN
                            INSERT (ID, JOB_ID, NAME, VALUE)
-                           VALUES (HF_SEQUENCE.NEXTVAL, :JOB_ID, :NAME, :VALUE)",
+                           VALUES ({GetPrimarySequence()}.NEXTVAL, :JOB_ID, :NAME, :VALUE)",
                     oracleDynamicParameters);
             });
         }
@@ -588,7 +590,7 @@ namespace Kavosh.Hangfire.Oracle.Core
                                UPDATE SET VALUE = :VALUE
                            WHEN NOT MATCHED THEN
                                INSERT (ID, KEY, FIELD, VALUE)
-                               VALUES (HF_SEQUENCE.NEXTVAL, :KEY, :FIELD, :VALUE)",
+                               VALUES ({GetPrimarySequence()}.NEXTVAL, :KEY, :FIELD, :VALUE)",
                         oracleDynamicParameters);
                 }
             });

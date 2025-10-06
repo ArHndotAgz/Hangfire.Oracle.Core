@@ -26,6 +26,7 @@ namespace Kavosh.Hangfire.Oracle.Core
 
         private string T(string logicalName) => _storage.TableNameProvider.GetTableName(logicalName);
         private OracleMappingType GetClobMappingType() => _storage.TableNameProvider.GetClobType() == "NCLOB" ? OracleMappingType.NClob : OracleMappingType.Clob;
+        private string GetPrimarySequence() => _storage.TableNameProvider.GetPrimarySequenceName();
 
         public override void ExpireJob(string jobId, TimeSpan expireIn)
         {
@@ -55,7 +56,7 @@ namespace Kavosh.Hangfire.Oracle.Core
             AcquireStateLock();
             AcquireJobLock();
 
-            var stateId = _storage.UseConnection(connection => connection.GetNextId());
+            var stateId = _storage.UseConnection(connection => connection.GetNextId(GetPrimarySequence()));
 
             var oracleDynamicParameters = new OracleDynamicParameters();
             oracleDynamicParameters.AddDynamicParams(new
@@ -97,7 +98,7 @@ namespace Kavosh.Hangfire.Oracle.Core
 
             QueueCommand(x => x.Execute(
                 $@"INSERT INTO {T("JobState")} (ID, JOB_ID, NAME, REASON, CREATED_AT, DATA) 
-                   VALUES (HF_SEQUENCE.NEXTVAL, :JOB_ID, :NAME, :REASON, :CREATED_AT, :DATA)", 
+                   VALUES ({GetPrimarySequence()}.NEXTVAL, :JOB_ID, :NAME, :REASON, :CREATED_AT, :DATA)", 
                 oracleDynamicParameters));
         }
 
@@ -118,7 +119,7 @@ namespace Kavosh.Hangfire.Oracle.Core
             AcquireCounterLock();
 
             QueueCommand(x => x.Execute(
-                $"INSERT INTO {T("Counter")} (ID, KEY, VALUE) values (HF_SEQUENCE.NEXTVAL, :KEY, :VALUE)",
+                $"INSERT INTO {T("Counter")} (ID, KEY, VALUE) values ({GetPrimarySequence()}.NEXTVAL, :KEY, :VALUE)",
                 new { KEY = key, VALUE = +1 }));
         }
 
@@ -130,7 +131,7 @@ namespace Kavosh.Hangfire.Oracle.Core
 
             QueueCommand(x =>
                 x.Execute(
-                    $"INSERT INTO {T("Counter")} (ID, KEY, VALUE, EXPIRE_AT) values (HF_SEQUENCE.NEXTVAL, :KEY, :VALUE, :EXPIRE_AT)",
+                    $"INSERT INTO {T("Counter")} (ID, KEY, VALUE, EXPIRE_AT) values ({GetPrimarySequence()}.NEXTVAL, :KEY, :VALUE, :EXPIRE_AT)",
                     new { KEY = key, VALUE = +1, EXPIRE_AT = DateTime.UtcNow.Add(expireIn) }));
         }
 
@@ -142,7 +143,7 @@ namespace Kavosh.Hangfire.Oracle.Core
 
             QueueCommand(x =>
                 x.Execute(
-                    $"INSERT INTO {T("Counter")} (ID, KEY, VALUE) values (HF_SEQUENCE.NEXTVAL, :KEY, :VALUE)",
+                    $"INSERT INTO {T("Counter")} (ID, KEY, VALUE) values ({GetPrimarySequence()}.NEXTVAL, :KEY, :VALUE)",
                     new { KEY = key, VALUE = -1 }));
         }
 
@@ -153,7 +154,7 @@ namespace Kavosh.Hangfire.Oracle.Core
             AcquireCounterLock();
             QueueCommand(x =>
                 x.Execute(
-                    $"INSERT INTO {T("Counter")} (ID, KEY, VALUE, EXPIRE_AT) values (HF_SEQUENCE.NEXTVAL, :KEY, :VALUE, :EXPIRE_AT)",
+                    $"INSERT INTO {T("Counter")} (ID, KEY, VALUE, EXPIRE_AT) values ({GetPrimarySequence()}.NEXTVAL, :KEY, :VALUE, :EXPIRE_AT)",
                     new { KEY = key, VALUE = -1, EXPIRE_AT = DateTime.UtcNow.Add(expireIn) }));
         }
 
@@ -176,7 +177,7 @@ namespace Kavosh.Hangfire.Oracle.Core
                        UPDATE SET SCORE = :SCORE
                    WHEN NOT MATCHED THEN
                        INSERT (ID, KEY, VALUE, SCORE)
-                       VALUES (HF_SEQUENCE.NEXTVAL, :KEY, :VALUE, :SCORE)",
+                       VALUES ({GetPrimarySequence()}.NEXTVAL, :KEY, :VALUE, :SCORE)",
                 new { KEY = key, VALUE = value, SCORE = score }));
         }
 
@@ -190,7 +191,7 @@ namespace Kavosh.Hangfire.Oracle.Core
             AcquireSetLock();
             QueueCommand(x =>
                 x.Execute(
-                    $"INSERT INTO {T("Set")} (ID, KEY, VALUE, SCORE) VALUES (HF_SEQUENCE.NEXTVAL, :KEY, :VALUE, 0.0)",
+                    $"INSERT INTO {T("Set")} (ID, KEY, VALUE, SCORE) VALUES ({GetPrimarySequence()}.NEXTVAL, :KEY, :VALUE, 0.0)",
                     items.Select(value => new { KEY = key, VALUE = value }).ToList()));
         }
 
@@ -228,7 +229,7 @@ namespace Kavosh.Hangfire.Oracle.Core
             oracleDynamicParameters.Add("VALUE", value, GetClobMappingType(), ParameterDirection.Input);
 
             QueueCommand(x => x.Execute(
-                $"INSERT INTO {T("List")} (ID, KEY, VALUE) VALUES (HF_SEQUENCE.NEXTVAL, :KEY, :VALUE)", 
+                $"INSERT INTO {T("List")} (ID, KEY, VALUE) VALUES ({GetPrimarySequence()}.NEXTVAL, :KEY, :VALUE)", 
                 oracleDynamicParameters));
         }
         
@@ -351,7 +352,7 @@ namespace Kavosh.Hangfire.Oracle.Core
                            UPDATE SET VALUE = :VALUE
                        WHEN NOT MATCHED THEN
                            INSERT (ID, KEY, VALUE, FIELD)
-                           VALUES (HF_SEQUENCE.NEXTVAL, :KEY, :VALUE, :FIELD)",
+                           VALUES ({GetPrimarySequence()}.NEXTVAL, :KEY, :VALUE, :FIELD)",
                     keyValuePairs.Select(y => new { KEY = key, FIELD = y.Key, VALUE = y.Value })));
         }
 

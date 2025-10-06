@@ -25,6 +25,7 @@ namespace Kavosh.Hangfire.Oracle.Core
         }
 
         private string T(string logicalName) => _storage.TableNameProvider.GetTableName(logicalName);
+        private string GetPrimarySequence() => _storage.TableNameProvider.GetPrimarySequenceName();
 
         public void Execute(CancellationToken cancellationToken)
         {
@@ -57,23 +58,23 @@ namespace Kavosh.Hangfire.Oracle.Core
         private string GetMergeQuery()
         {
             return $@"
-BEGIN
-    MERGE INTO {T("AggregatedCounter")} AC
-         USING (SELECT KEY, SUM(VALUE) AS VALUE, MAX(EXPIRE_AT) AS EXPIRE_AT
-                FROM (SELECT KEY, VALUE, EXPIRE_AT
-                      FROM {T("Counter")}
-                      WHERE ROWNUM <= :COUNT) TMP
-                GROUP BY KEY) C
-        ON (AC.KEY = C.KEY)
-    WHEN MATCHED THEN
-       UPDATE SET VALUE = AC.VALUE + C.VALUE, EXPIRE_AT = GREATEST(EXPIRE_AT, C.EXPIRE_AT)
-    WHEN NOT MATCHED THEN
-       INSERT (ID, KEY, VALUE, EXPIRE_AT)
-       VALUES (HF_SEQUENCE.NEXTVAL, C.KEY, C.VALUE, C.EXPIRE_AT);
+                        BEGIN
+                            MERGE INTO {T("AggregatedCounter")} AC
+                                 USING (SELECT KEY, SUM(VALUE) AS VALUE, MAX(EXPIRE_AT) AS EXPIRE_AT
+                                        FROM (SELECT KEY, VALUE, EXPIRE_AT
+                                              FROM {T("Counter")}
+                                              WHERE ROWNUM <= :COUNT) TMP
+                                        GROUP BY KEY) C
+                                ON (AC.KEY = C.KEY)
+                            WHEN MATCHED THEN
+                               UPDATE SET VALUE = AC.VALUE + C.VALUE, EXPIRE_AT = GREATEST(EXPIRE_AT, C.EXPIRE_AT)
+                            WHEN NOT MATCHED THEN
+                               INSERT (ID, KEY, VALUE, EXPIRE_AT)
+                               VALUES ({GetPrimarySequence()}.NEXTVAL, C.KEY, C.VALUE, C.EXPIRE_AT);
 
-   DELETE FROM {T("Counter")}
-    WHERE ROWNUM <= :COUNT;
-END;";
+                           DELETE FROM {T("Counter")}
+                            WHERE ROWNUM <= :COUNT;
+                        END;";
         }
     }
 }

@@ -14,7 +14,9 @@ namespace Kavosh.Hangfire.Oracle.Core.JobQueue
 
         private readonly OracleStorage _storage;
         private readonly OracleStorageOptions _options;
-        
+
+        private string GetPrimarySequence() => _storage.TableNameProvider.GetPrimarySequenceName();
+
         public OracleJobQueue(OracleStorage storage, OracleStorageOptions options)
         {
             _storage = storage ?? throw new ArgumentNullException(nameof(storage));
@@ -90,7 +92,7 @@ namespace Kavosh.Hangfire.Oracle.Core.JobQueue
         {
             Logger.TraceFormat("Enqueue JobId={0} Queue={1}", jobId, queue);
             connection.Execute(
-                $"INSERT INTO {T("JobQueue")} (ID, JOB_ID, QUEUE) VALUES (HF_SEQUENCE.NEXTVAL, :JOB_ID, :QUEUE)", 
+                $"INSERT INTO {T("JobQueue")} (ID, JOB_ID, QUEUE) VALUES ({GetPrimarySequence()}.NEXTVAL, :JOB_ID, :QUEUE)", 
                 new { JOB_ID = jobId, QUEUE = queue });
         }
     }

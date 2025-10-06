@@ -18,10 +18,6 @@ namespace Kavosh.Hangfire.Oracle.Core.Configuration
 
     public class OracleDataTypeSettings
     {
-        /// <summary>
-        /// Use National Character Set (NVARCHAR2/NCLOB). Default: false (uses VARCHAR2/CLOB)
-        /// Set to true for full Unicode support including Persian characters.
-        /// </summary>
-        public bool UseNationalCharacterSet { get; set; } = false;
+        public bool UseNationalCharacterSet { get; set; } = true;
     }
 }
