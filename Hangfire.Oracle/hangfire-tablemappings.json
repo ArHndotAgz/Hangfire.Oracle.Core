@@ -1,0 +1,41 @@
+{
+  "DefaultSchema": "ESTCAD",
+  "Tables": {
+    "Job": {
+      "TableName": "HNGF_TB_JOB"
+    },
+    "JobParameter": {
+      "TableName": "HNGF_TB_JOB_PARAMETER"
+    },
+    "JobQueue": {
+      "TableName": "HNGF_TB_JOB_QUEUE"
+    },
+    "JobState": {
+      "TableName": "HNGF_TB_JOB_STATE"
+    },
+    "Server": {
+      "TableName": "HNGF_TB_SERVER"
+    },
+    "Set": {
+      "TableName": "HNGF_TB_SET"
+    },
+    "List": {
+      "TableName": "HNGF_TB_LIST"
+    },
+    "Hash": {
+      "TableName": "HNGF_TB_HASH"
+    },
+    "Counter": {
+      "TableName": "HNGF_TB_COUNTER"
+    },
+    "AggregatedCounter": {
+      "TableName": "HNGF_TB_AGGREGATED_COUNTER"
+    },
+    "DistributedLock": {
+      "TableName": "HNGF_TB_DISTRIBUTED_LOCK"
+    }
+  },
+  "DataTypeSettings": {
+    "UseNationalCharacterSet": false
+  }
+}

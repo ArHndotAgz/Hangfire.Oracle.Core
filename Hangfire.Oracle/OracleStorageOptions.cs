@@ -1,5 +1,6 @@
 using System;
 using System.Data;
+using Hangfire.Oracle.Core.Configuration;
 
 namespace Hangfire.Oracle.Core
 {
@@ -17,6 +18,7 @@ namespace Hangfire.Oracle.Core
             DashboardJobListLimit = 50000;
             TransactionTimeout = TimeSpan.FromMinutes(1);
             InvisibilityTimeout = TimeSpan.FromMinutes(30);
+            TableMappings = null; // Will use defaults if null
         }
 
         public IsolationLevel? TransactionIsolationLevel { get; set; }
@@ -48,9 +50,15 @@ namespace Hangfire.Oracle.Core
 
         public int? DashboardJobListLimit { get; set; }
         public TimeSpan TransactionTimeout { get; set; }
+        
         [Obsolete("Does not make sense anymore. Background jobs re-queued instantly even after ungraceful shutdown now. Will be removed in 2.0.0.")]
         public TimeSpan InvisibilityTimeout { get; set; }
 
         public string SchemaName { get; set; }
+
+        /// <summary>
+        /// Custom table mappings configuration. If null, default Hangfire table names will be used.
+        /// </summary>
+        public HangfireTableMappings TableMappings { get; set; }
     }
 }

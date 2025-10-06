@@ -26,6 +26,8 @@ namespace Hangfire.Oracle.Core
             _interval = interval;
         }
 
+        private string T(string logicalName) => _storage.TableNameProvider.GetTableName(logicalName);
+
         public void Execute(CancellationToken cancellationToken)
         {
             Logger.DebugFormat("Aggregating records in 'Counter' table...");
@@ -54,35 +56,26 @@ namespace Hangfire.Oracle.Core
             return GetType().ToString();
         }
 
-        private static string GetMergeQuery()
+        private string GetMergeQuery()
         {
-            return @"
+            return $@"
 BEGIN
-    MERGE INTO HF_AGGREGATED_COUNTER AC
-         USING (  SELECT KEY, SUM (VALUE) AS VALUE, MAX (EXPIRE_AT) AS EXPIRE_AT
-                    FROM (SELECT KEY, VALUE, EXPIRE_AT
-                            FROM HF_COUNTER
-                           WHERE ROWNUM <= :COUNT) TMP
+    MERGE INTO {T("AggregatedCounter")} AC
+         USING (SELECT KEY, SUM(VALUE) AS VALUE, MAX(EXPIRE_AT) AS EXPIRE_AT
+                FROM (SELECT KEY, VALUE, EXPIRE_AT
+                      FROM {T("Counter")}
+                      WHERE ROWNUM <= :COUNT) TMP
                 GROUP BY KEY) C
-            ON (AC.KEY = C.KEY)
-    WHEN MATCHED
-    THEN
-       UPDATE SET VALUE = AC.VALUE + C.VALUE, EXPIRE_AT = GREATEST (EXPIRE_AT, C.EXPIRE_AT)
-    WHEN NOT MATCHED
-    THEN
-       INSERT     (ID
-                  ,KEY
-                  ,VALUE
-                  ,EXPIRE_AT)
-           VALUES (HF_SEQUENCE.NEXTVAL
-                  ,C.KEY
-                  ,C.VALUE
-                  ,C.EXPIRE_AT);
+        ON (AC.KEY = C.KEY)
+    WHEN MATCHED THEN
+       UPDATE SET VALUE = AC.VALUE + C.VALUE, EXPIRE_AT = GREATEST(EXPIRE_AT, C.EXPIRE_AT)
+    WHEN NOT MATCHED THEN
+       INSERT (ID, KEY, VALUE, EXPIRE_AT)
+       VALUES (HF_SEQUENCE.NEXTVAL, C.KEY, C.VALUE, C.EXPIRE_AT);
 
-   DELETE FROM HF_COUNTER
+   DELETE FROM {T("Counter")}
     WHERE ROWNUM <= :COUNT;
-END;
-";
+END;";
         }
     }
 }

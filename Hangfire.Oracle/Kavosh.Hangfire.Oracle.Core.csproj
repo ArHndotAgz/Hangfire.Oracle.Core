@@ -1,0 +1,48 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFrameworks>netstandard2.0</TargetFrameworks>
+		<Title>Kavosh.Hangfire.Oracle.Core</Title>
+		<Summary>Kavosh's customized Hangfire Oracle storage with dynamic table naming</Summary>
+		<Description>Hangfire's Oracle storage with support for custom table names and schema configuration. Fork of Hangfire.Oracle.Core with enterprise naming conventions support.</Description>
+		<PackageId>Kavosh.Hangfire.Oracle.Core</PackageId>
+		<Product>Kavosh.Hangfire.Oracle.Core</Product>
+		<Company>Rayan Pardaz Kavosh</Company>
+		<Authors>Amirhossein Aghazadeh</Authors>
+		<Owners>Rayan Pardaz Kavosh</Owners>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageProjectUrl>https://github.com/yourusername/Kavosh.Hangfire.Oracle.Core</PackageProjectUrl>
+		<Copyright>Copyright 2025</Copyright>
+		<PackageTags>Hangfire Oracle Hangfire.Oracle Kavosh Custom-Tables Dynamic-Naming</PackageTags>
+		<Version>2.0.0</Version>
+		<AssemblyVersion>2.0.0.0</AssemblyVersion>
+		<AssemblyName>Kavosh.Hangfire.Oracle.Core</AssemblyName>
+		<RootNamespace>Hangfire.Oracle.Core</RootNamespace>
+		<PackageReleaseNotes>
+			v2.0.0: Major update with dynamic table naming support
+			- Support for custom table names via JSON configuration
+			- Configurable Oracle data types (NVARCHAR2/VARCHAR2, NCLOB/CLOB)
+			- Schema-aware table management
+			- Backward compatible with default Hangfire table names
+			- Dynamic SQL generation replaces static Install.sql
+		</PackageReleaseNotes>
+		<PackageVersion>2.0.0</PackageVersion>
+	</PropertyGroup>
+	<ItemGroup>
+	  <Compile Remove="Properties\**" />
+	  <EmbeddedResource Remove="Properties\**" />
+	  <None Remove="Properties\**" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Dapper.Oracle" Version="1.0.3" />
+		<PackageReference Include="Microsoft.CSharp" Version="4.5.0" />
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
+		<PackageReference Include="Dapper" Version="1.60.6" />
+		<PackageReference Include="Hangfire.Core" Version="1.7.0" />
+		<PackageReference Include="Oracle.ManagedDataAccess.Core" Version="2.19.280" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Folder Include="Configuration\" />
+	</ItemGroup>
+</Project>

@@ -3,11 +3,10 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Text;
-
 using Dapper;
-
 using Hangfire.Annotations;
 using Hangfire.Logging;
+using Hangfire.Oracle.Core.Configuration;
 using Hangfire.Oracle.Core.JobQueue;
 using Hangfire.Oracle.Core.Monitoring;
 using Hangfire.Server;
@@ -27,6 +26,8 @@ namespace Hangfire.Oracle.Core
         private readonly OracleStorageOptions _options;
 
         public virtual PersistentJobQueueProviderCollection QueueProviders { get; private set; }
+        
+        public HangfireTableNameProvider TableNameProvider { get; private set; }
 
         public OracleStorage(string connectionString)
             : this(connectionString, new OracleStorageOptions())
@@ -50,6 +51,8 @@ namespace Hangfire.Oracle.Core
             }
 
             _options = options ?? throw new ArgumentNullException(nameof(options));
+            
+            InitializeTableNameProvider();
             PrepareSchemaIfNecessary(options);
 
             InitializeQueueProviders();
@@ -60,9 +63,28 @@ namespace Hangfire.Oracle.Core
             _connectionFactory = connectionFactory ?? throw new ArgumentNullException(nameof(connectionFactory));
 
             _options = options ?? throw new ArgumentNullException(nameof(options));
+            
+            InitializeTableNameProvider();
             PrepareSchemaIfNecessary(options);
 
             InitializeQueueProviders();
+        }
+
+        private void InitializeTableNameProvider()
+        {
+            var mappings = _options.TableMappings ?? new HangfireTableMappings
+            {
+                DefaultSchema = _options.SchemaName ?? string.Empty,
+                DataTypeSettings = new OracleDataTypeSettings { UseNationalCharacterSet = false }
+            };
+
+            // Ensure schema is set from SchemaName if not in mappings
+            if (string.IsNullOrEmpty(mappings.DefaultSchema) && !string.IsNullOrEmpty(_options.SchemaName))
+            {
+                mappings.DefaultSchema = _options.SchemaName;
+            }
+
+            TableNameProvider = new HangfireTableNameProvider(mappings);
         }
 
         private void PrepareSchemaIfNecessary(OracleStorageOptions options)
@@ -71,7 +93,7 @@ namespace Hangfire.Oracle.Core
             {
                 using (var connection = CreateAndOpenConnection())
                 {
-                    OracleObjectsInstaller.Install(connection, options.SchemaName);
+                    OracleObjectsInstaller.Install(connection, TableNameProvider);
                 }
             }
         }
@@ -217,9 +239,10 @@ namespace Hangfire.Oracle.Core
             {
                 connection.Open();
 
-                if (!string.IsNullOrWhiteSpace(_options.SchemaName))
+                var schema = TableNameProvider.GetSchemaForTable("Job"); // Get schema from provider
+                if (!string.IsNullOrWhiteSpace(schema))
                 {
-                    connection.Execute($"ALTER SESSION SET CURRENT_SCHEMA={_options.SchemaName}");
+                    connection.Execute($"ALTER SESSION SET CURRENT_SCHEMA={schema}");
                 }
             }
 
@@ -230,6 +253,7 @@ namespace Hangfire.Oracle.Core
         {
             connection?.Dispose();
         }
+        
         public void Dispose()
         {
         }

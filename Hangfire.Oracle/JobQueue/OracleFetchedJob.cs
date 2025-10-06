@@ -34,9 +34,10 @@ namespace Hangfire.Oracle.Core.JobQueue
             Queue = fetchedJob.Queue;
         }
 
+        private string T(string logicalName) => _storage.TableNameProvider.GetTableName(logicalName);
+
         public void Dispose()
         {
-
             if (_disposed) return;
 
             if (!_removedFromQueue && !_requeued)
@@ -53,10 +54,8 @@ namespace Hangfire.Oracle.Core.JobQueue
         {
             Logger.TraceFormat("RemoveFromQueue JobId={0}", JobId);
 
-            //todo: unit test
             _connection.Execute(
-                "DELETE FROM HF_JOB_QUEUE " +
-                " WHERE ID = :ID",
+                $"DELETE FROM {T("JobQueue")} WHERE ID = :ID",
                 new
                 {
                     ID = _id
@@ -69,11 +68,8 @@ namespace Hangfire.Oracle.Core.JobQueue
         {
             Logger.TraceFormat("Requeue JobId={0}", JobId);
 
-            //todo: unit test
             _connection.Execute(
-                "UPDATE HF_JOB_QUEUE " +
-                "   SET FETCHED_AT = null " +
-                " WHERE ID = :ID",
+                $"UPDATE {T("JobQueue")} SET FETCHED_AT = null WHERE ID = :ID",
                 new
                 {
                     ID = _id

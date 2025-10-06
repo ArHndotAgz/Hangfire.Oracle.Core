@@ -3,10 +3,8 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Threading;
-
 using Dapper;
 using Dapper.Oracle;
-
 using Hangfire.Common;
 using Hangfire.Logging;
 using Hangfire.Oracle.Core.Entities;
@@ -20,10 +18,14 @@ namespace Hangfire.Oracle.Core
         private static readonly ILog Logger = LogProvider.GetLogger(typeof(OracleStorageConnection));
 
         private readonly OracleStorage _storage;
+        
         public OracleStorageConnection(OracleStorage storage)
         {
             _storage = storage ?? throw new ArgumentNullException(nameof(storage));
         }
+
+        private string T(string logicalName) => _storage.TableNameProvider.GetTableName(logicalName);
+        private string GetClobType() => _storage.TableNameProvider.GetClobType();
 
         public override IWriteOnlyTransaction CreateWriteTransaction()
         {
@@ -64,14 +66,12 @@ namespace Hangfire.Oracle.Core
                     CREATED_AT = createdAt,
                     EXPIRE_AT = createdAt.Add(expireIn)
                 });
-                oracleDynamicParameters.Add("INVOCATION_DATA", SerializationHelper.Serialize(invocationData, SerializationOption.User), OracleMappingType.NClob, ParameterDirection.Input);
-                oracleDynamicParameters.Add("ARGUMENTS", arguments.Arguments, OracleMappingType.NClob, ParameterDirection.Input);
+                oracleDynamicParameters.Add("INVOCATION_DATA", SerializationHelper.Serialize(invocationData, SerializationOption.User), GetClobType() == "NCLOB" ? OracleMappingType.NClob : OracleMappingType.Clob, ParameterDirection.Input);
+                oracleDynamicParameters.Add("ARGUMENTS", arguments.Arguments, GetClobType() == "NCLOB" ? OracleMappingType.NClob : OracleMappingType.Clob, ParameterDirection.Input);
 
                 connection.Execute(
-                    @" 
- INSERT INTO HF_JOB (ID, INVOCATION_DATA, ARGUMENTS, CREATED_AT, EXPIRE_AT) 
-      VALUES (:ID, :INVOCATION_DATA, :ARGUMENTS, :CREATED_AT, :EXPIRE_AT)
-",
+                    $@"INSERT INTO {T("Job")} (ID, INVOCATION_DATA, ARGUMENTS, CREATED_AT, EXPIRE_AT) 
+                       VALUES (:ID, :INVOCATION_DATA, :ARGUMENTS, :CREATED_AT, :EXPIRE_AT)",
                     oracleDynamicParameters);
 
                 if (parameters.Count > 0)
@@ -86,12 +86,12 @@ namespace Hangfire.Oracle.Core
                             JOB_ID = jobId,
                             NAME = parameter.Key
                         });
-                        dynamicParameters.Add("VALUE", parameter.Value, OracleMappingType.NClob, ParameterDirection.Input);
+                        dynamicParameters.Add("VALUE", parameter.Value, GetClobType() == "NCLOB" ? OracleMappingType.NClob : OracleMappingType.Clob, ParameterDirection.Input);
 
                         parameterArray[parameterIndex++] = dynamicParameters;
                     }
 
-                    connection.Execute(@"INSERT INTO HF_JOB_PARAMETER (ID, NAME, VALUE, JOB_ID) VALUES (HF_SEQUENCE.NEXTVAL, :NAME, :VALUE, :JOB_ID)", parameterArray);
+                    connection.Execute($"INSERT INTO {T("JobParameter")} (ID, NAME, VALUE, JOB_ID) VALUES (HF_SEQUENCE.NEXTVAL, :NAME, :VALUE, :JOB_ID)", parameterArray);
                 }
 
                 return jobId.ToString();
@@ -136,18 +136,16 @@ namespace Hangfire.Oracle.Core
             {
                 var oracleDynamicParameters = new OracleDynamicParameters();
                 oracleDynamicParameters.AddDynamicParams(new { JOB_ID = id, NAME = name });
-                oracleDynamicParameters.Add("VALUE", value, OracleMappingType.NClob, ParameterDirection.Input);
+                oracleDynamicParameters.Add("VALUE", value, GetClobType() == "NCLOB" ? OracleMappingType.NClob : OracleMappingType.Clob, ParameterDirection.Input);
                 connection.Execute(
-                    @" 
- MERGE INTO HF_JOB_PARAMETER JP
-      USING (SELECT 1 FROM DUAL) SRC
-         ON (JP.NAME = :NAME AND JP.JOB_ID = :JOB_ID)
- WHEN MATCHED THEN
-      UPDATE SET VALUE = :VALUE
- WHEN NOT MATCHED THEN
-      INSERT (ID, JOB_ID, NAME, VALUE)
-      VALUES (HF_SEQUENCE.NEXTVAL, :JOB_ID, :NAME, :VALUE)
-",
+                    $@"MERGE INTO {T("JobParameter")} JP
+                       USING (SELECT 1 FROM DUAL) SRC
+                       ON (JP.NAME = :NAME AND JP.JOB_ID = :JOB_ID)
+                       WHEN MATCHED THEN
+                           UPDATE SET VALUE = :VALUE
+                       WHEN NOT MATCHED THEN
+                           INSERT (ID, JOB_ID, NAME, VALUE)
+                           VALUES (HF_SEQUENCE.NEXTVAL, :JOB_ID, :NAME, :VALUE)",
                     oracleDynamicParameters);
             });
         }
@@ -166,9 +164,9 @@ namespace Hangfire.Oracle.Core
 
             return _storage.UseConnection(connection =>
                 connection.QuerySingleOrDefault<string>(
-                    "SELECT VALUE as Value " +
-                    "  FROM HF_JOB_PARAMETER " +
-                    " WHERE JOB_ID = :ID AND NAME = :NAME",
+                    $@"SELECT VALUE as Value 
+                       FROM {T("JobParameter")} 
+                       WHERE JOB_ID = :ID AND NAME = :NAME",
                     new { ID = id, NAME = name }));
         }
 
@@ -182,9 +180,9 @@ namespace Hangfire.Oracle.Core
             return _storage.UseConnection(connection =>
             {
                 var jobData = connection.QuerySingleOrDefault<SqlJob>(
-                            "SELECT INVOCATION_DATA AS InvocationData, STATE_NAME AS StateName, ARGUMENTS AS Arguments, CREATED_AT AS CreatedAt " +
-                            "  FROM HF_JOB " +
-                            " WHERE ID = :ID",
+                            $@"SELECT INVOCATION_DATA AS InvocationData, STATE_NAME AS StateName, ARGUMENTS AS Arguments, CREATED_AT AS CreatedAt 
+                               FROM {T("Job")} 
+                               WHERE ID = :ID",
                             new { ID = jobId });
 
                 if (jobData == null)
@@ -227,11 +225,10 @@ namespace Hangfire.Oracle.Core
             return _storage.UseConnection(connection =>
             {
                 var sqlState = connection.QuerySingleOrDefault<SqlState>(
-                        " SELECT S.NAME AS Name, S.REASON AS Reason, S.DATA AS Data " +
-                        "   FROM HF_JOB_STATE S" +
-                        "  INNER JOIN HF_JOB J" +
-                        "    ON J.STATE_ID = S.ID " +
-                        " WHERE J.ID = :JOB_ID",
+                        $@"SELECT S.NAME AS Name, S.REASON AS Reason, S.DATA AS Data 
+                           FROM {T("JobState")} S
+                           INNER JOIN {T("Job")} J ON J.STATE_ID = S.ID 
+                           WHERE J.ID = :JOB_ID",
                         new { JOB_ID = jobId });
 
                 if (sqlState == null)
@@ -267,16 +264,14 @@ namespace Hangfire.Oracle.Core
             _storage.UseConnection(connection =>
             {
                 connection.Execute(
-                    @"
- MERGE INTO HF_SERVER S
-      USING (SELECT 1 FROM DUAL) SRC
-         ON (S.ID = :ID)
- WHEN MATCHED THEN
-      UPDATE SET LAST_HEART_BEAT = :LAST_HEART_BEAT
- WHEN NOT MATCHED THEN
-      INSERT (ID, DATA, LAST_HEART_BEAT)
-      VALUES (:ID, :DATA, :LAST_HEART_BEAT)
-",
+                    $@"MERGE INTO {T("Server")} S
+                       USING (SELECT 1 FROM DUAL) SRC
+                       ON (S.ID = :ID)
+                       WHEN MATCHED THEN
+                           UPDATE SET LAST_HEART_BEAT = :LAST_HEART_BEAT
+                       WHEN NOT MATCHED THEN
+                           INSERT (ID, DATA, LAST_HEART_BEAT)
+                           VALUES (:ID, :DATA, :LAST_HEART_BEAT)",
                     new
                     {
                         ID = serverId,
@@ -301,7 +296,7 @@ namespace Hangfire.Oracle.Core
             _storage.UseConnection(connection =>
             {
                 connection.Execute(
-                    "DELETE FROM HF_SERVER where ID = :ID",
+                    $"DELETE FROM {T("Server")} where ID = :ID",
                     new { ID = serverId });
             });
         }
@@ -316,9 +311,9 @@ namespace Hangfire.Oracle.Core
             _storage.UseConnection(connection =>
             {
                 connection.Execute(
-                    " UPDATE HF_SERVER" +
-                    "    SET LAST_HEART_BEAT = :NOW" +
-                    "  WHERE ID = :ID",
+                    $@"UPDATE {T("Server")}
+                       SET LAST_HEART_BEAT = :NOW
+                       WHERE ID = :ID",
                     new { NOW = DateTime.UtcNow, ID = serverId });
             });
         }
@@ -333,8 +328,8 @@ namespace Hangfire.Oracle.Core
             return
                 _storage.UseConnection(connection =>
                     connection.Execute(
-                        " DELETE FROM HF_SERVER" +
-                        "  WHERE LAST_HEART_BEAT < :TIME_OUT_AT",
+                        $@"DELETE FROM {T("Server")}
+                           WHERE LAST_HEART_BEAT < :TIME_OUT_AT",
                         new { TIME_OUT_AT = DateTime.UtcNow.Add(timeOut.Negate()) }));
         }
 
@@ -345,9 +340,9 @@ namespace Hangfire.Oracle.Core
             return
                 _storage.UseConnection(connection =>
                     connection.QueryFirst<int>(
-                        "SELECT COUNT(KEY) " +
-                        "  FROM HF_SET" +
-                        " WHERE KEY = :KEY",
+                        $@"SELECT COUNT(KEY) 
+                           FROM {T("Set")}
+                           WHERE KEY = :KEY",
                         new { KEY = key }));
         }
 
@@ -359,13 +354,12 @@ namespace Hangfire.Oracle.Core
             }
 
             return _storage.UseConnection(connection =>
-                connection.Query<string>(@"
-SELECT VALUE as Value
-  FROM (SELECT VALUE, RANK () OVER (ORDER BY ID) AS RANK
-          FROM HF_SET
-         WHERE KEY = :KEY)
- WHERE RANK BETWEEN :S AND :E
-",
+                connection.Query<string>($@"
+                    SELECT VALUE as Value
+                    FROM (SELECT VALUE, RANK () OVER (ORDER BY ID) AS RANK
+                          FROM {T("Set")}
+                          WHERE KEY = :KEY)
+                    WHERE RANK BETWEEN :S AND :E",
                         new { KEY = key, S = startingFrom + 1, E = endingAt + 1 }).ToList());
         }
 
@@ -380,9 +374,9 @@ SELECT VALUE as Value
                 _storage.UseConnection(connection =>
                 {
                     var result = connection.Query<string>(
-                        "SELECT VALUE AS Value" +
-                        "  FROM HF_SET" +
-                        " WHERE KEY = :KEY",
+                        $@"SELECT VALUE AS Value
+                           FROM {T("Set")}
+                           WHERE KEY = :KEY",
                         new { KEY = key });
 
                     return new HashSet<string>(result);
@@ -404,14 +398,12 @@ SELECT VALUE as Value
             return
                 _storage.UseConnection(connection =>
                     connection.QuerySingleOrDefault<string>(
-                        @"
-SELECT *
-  FROM (  SELECT VALUE AS Value
-            FROM HF_SET
-           WHERE KEY = :KEY AND SCORE BETWEEN :F AND :T
-        ORDER BY SCORE)
- WHERE ROWNUM = 1
-",
+                        $@"SELECT *
+                           FROM (SELECT VALUE AS Value
+                                 FROM {T("Set")}
+                                 WHERE KEY = :KEY AND SCORE BETWEEN :F AND :T
+                                 ORDER BY SCORE)
+                           WHERE ROWNUM = 1",
                         new { KEY = key, F = fromScore, T = toScore }));
         }
 
@@ -422,15 +414,15 @@ SELECT *
                 throw new ArgumentNullException(nameof(key));
             }
 
-            const string query = @"
- SELECT SUM(S.Value)
-   FROM (SELECT SUM(VALUE) AS Value
-   FROM HF_COUNTER
-  WHERE KEY = :KEY
- UNION ALL
- SELECT VALUE as Value
-  FROM HF_AGGREGATED_COUNTER
- WHERE KEY = :KEY) AS S";
+            var query = $@"
+                SELECT SUM(S.Value)
+                FROM (SELECT SUM(VALUE) AS Value
+                      FROM {T("Counter")}
+                      WHERE KEY = :KEY
+                      UNION ALL
+                      SELECT VALUE as Value
+                      FROM {T("AggregatedCounter")}
+                      WHERE KEY = :KEY) AS S";
 
             return
                 _storage
@@ -446,7 +438,7 @@ SELECT *
                 _storage
                     .UseConnection(connection =>
                         connection.QuerySingle<long>(
-                            "SELECT COUNT(ID) FROM HF_HASH WHERE KEY = :KEY",
+                            $"SELECT COUNT(ID) FROM {T("Hash")} WHERE KEY = :KEY",
                             new { KEY = key }));
         }
 
@@ -458,7 +450,7 @@ SELECT *
             {
                 var result =
                     connection.QuerySingle<DateTime?>(
-                        "SELECT MIN(EXPIRE_AT) FROM HF_HASH WHERE KEY = :KEY",
+                        $"SELECT MIN(EXPIRE_AT) FROM {T("Hash")} WHERE KEY = :KEY",
                         new { KEY = key });
 
                 if (!result.HasValue)
@@ -478,7 +470,7 @@ SELECT *
                 _storage
                     .UseConnection(connection =>
                         connection.QuerySingle<long>(
-                            "SELECT COUNT(ID) FROM HF_LIST WHERE KEY = :KEY",
+                            $"SELECT COUNT(ID) FROM {T("List")} WHERE KEY = :KEY",
                             new { KEY = key }));
         }
 
@@ -489,7 +481,7 @@ SELECT *
             return _storage.UseConnection(connection =>
             {
                 var result = connection.QuerySingle<DateTime?>(
-                        "SELECT MIN(EXPIRE_AT) FROM HF_LIST WHERE KEY = :KEY",
+                        $"SELECT MIN(EXPIRE_AT) FROM {T("List")} WHERE KEY = :KEY",
                         new { KEY = key });
 
                 if (!result.HasValue)
@@ -510,7 +502,7 @@ SELECT *
                 _storage
                     .UseConnection(connection =>
                         connection.QuerySingleOrDefault<string>(
-                            "SELECT VALUE AS Value FROM HF_HASH WHERE KEY = :KEY and FIELD = :FIELD",
+                            $"SELECT VALUE AS Value FROM {T("Hash")} WHERE KEY = :KEY and FIELD = :FIELD",
                             new { KEY = key, FIELD = name }));
         }
 
@@ -521,13 +513,13 @@ SELECT *
                 throw new ArgumentNullException(nameof(key));
             }
 
-            const string query = @"
-SELECT VALUE as Value
-  FROM (SELECT VALUE, RANK () OVER (ORDER BY ID DESC) AS RANK
-          FROM HF_LIST
-         WHERE KEY = :KEY)
- WHERE RANK BETWEEN :S AND :E
-";
+            var query = $@"
+                SELECT VALUE as Value
+                FROM (SELECT VALUE, RANK () OVER (ORDER BY ID DESC) AS RANK
+                      FROM {T("List")}
+                      WHERE KEY = :KEY)
+                WHERE RANK BETWEEN :S AND :E";
+            
             return
                 _storage
                     .UseConnection(connection =>
@@ -540,11 +532,11 @@ SELECT VALUE as Value
         {
             if (key == null) throw new ArgumentNullException(nameof(key));
 
-            const string query = @"
- SELECT VALUE AS Value
-   FROM HF_LIST
-  WHERE KEY = :KEY
- ORDER BY ID DESC";
+            var query = $@"
+                SELECT VALUE AS Value
+                FROM {T("List")}
+                WHERE KEY = :KEY
+                ORDER BY ID DESC";
 
             return _storage.UseConnection(connection => connection.Query<string>(query, new { KEY = key }).ToList());
         }
@@ -555,7 +547,9 @@ SELECT VALUE as Value
 
             return _storage.UseConnection(connection =>
             {
-                var result = connection.QuerySingle<DateTime?>("SELECT MIN(EXPIRE_AT) FROM HF_SET WHERE KEY = :KEY", new { KEY = key });
+                var result = connection.QuerySingle<DateTime?>(
+                    $"SELECT MIN(EXPIRE_AT) FROM {T("Set")} WHERE KEY = :KEY", 
+                    new { KEY = key });
 
                 if (!result.HasValue)
                 {
@@ -584,19 +578,17 @@ SELECT VALUE as Value
                 {
                     var oracleDynamicParameters = new OracleDynamicParameters();
                     oracleDynamicParameters.AddDynamicParams(new { KEY = key, FIELD = keyValuePair.Key });
-                    oracleDynamicParameters.Add("VALUE", keyValuePair.Value, OracleMappingType.NClob, ParameterDirection.Input);
+                    oracleDynamicParameters.Add("VALUE", keyValuePair.Value, GetClobType() == "NCLOB" ? OracleMappingType.NClob : OracleMappingType.Clob, ParameterDirection.Input);
 
                     connection.Execute(
-                        @"
- MERGE INTO HF_HASH H
-      USING (SELECT 1 FROM DUAL) SRC
-         ON (H.KEY = :KEY AND H.FIELD = :FIELD)
- WHEN MATCHED THEN
-     UPDATE SET VALUE = :VALUE
- WHEN NOT MATCHED THEN
-     INSERT (ID, KEY, FIELD, VALUE)
-     VALUES (HF_SEQUENCE.NEXTVAL, :KEY, :FIELD, :VALUE)
-",
+                        $@"MERGE INTO {T("Hash")} H
+                           USING (SELECT 1 FROM DUAL) SRC
+                           ON (H.KEY = :KEY AND H.FIELD = :FIELD)
+                           WHEN MATCHED THEN
+                               UPDATE SET VALUE = :VALUE
+                           WHEN NOT MATCHED THEN
+                               INSERT (ID, KEY, FIELD, VALUE)
+                               VALUES (HF_SEQUENCE.NEXTVAL, :KEY, :FIELD, :VALUE)",
                         oracleDynamicParameters);
                 }
             });
@@ -612,7 +604,7 @@ SELECT VALUE as Value
             return _storage.UseConnection(connection =>
             {
                 var result = connection.Query<SqlHash>(
-                    "SELECT FIELD AS Field, VALUE AS Value FROM HF_HASH WHERE KEY = :KEY",
+                    $"SELECT FIELD AS Field, VALUE AS Value FROM {T("Hash")} WHERE KEY = :KEY",
                     new { KEY = key })
                     .ToDictionary(x => x.Field, x => x.Value);
 

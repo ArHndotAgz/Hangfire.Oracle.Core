@@ -2,9 +2,7 @@
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Threading;
-
 using Dapper;
-
 using Hangfire.Logging;
 using Hangfire.Server;
 
@@ -21,19 +19,6 @@ namespace Hangfire.Oracle.Core
         private static readonly TimeSpan DelayBetweenPasses = TimeSpan.FromSeconds(1);
         private const int NumberOfRecordsInSinglePass = 1000;
 
-        private static readonly List<Tuple<string, bool>> TablesToProcess = new List<Tuple<string, bool>>
-        {
-            // This list must be sorted in dependency order 
-            new Tuple<string, bool>("HF_JOB_PARAMETER", true),
-            new Tuple<string, bool>("HF_JOB_QUEUE", true),
-            new Tuple<string, bool>("HF_JOB_STATE", true),
-            new Tuple<string, bool>("HF_AGGREGATED_COUNTER", false),
-            new Tuple<string, bool>("HF_LIST", false),
-            new Tuple<string, bool>("HF_SET", false),
-            new Tuple<string, bool>("HF_HASH", false),
-            new Tuple<string, bool>("HF_JOB", false)
-        };
-
         private readonly OracleStorage _storage;
         private readonly TimeSpan _checkInterval;
 
@@ -48,9 +33,24 @@ namespace Hangfire.Oracle.Core
             _checkInterval = checkInterval;
         }
 
+        private string T(string logicalName) => _storage.TableNameProvider.GetTableName(logicalName);
+
         public void Execute(CancellationToken cancellationToken)
         {
-            foreach (var tuple in TablesToProcess)
+            // This list must be sorted in dependency order 
+            var tablesToProcess = new List<Tuple<string, bool>>
+            {
+                new Tuple<string, bool>("JobParameter", true),
+                new Tuple<string, bool>("JobQueue", true),
+                new Tuple<string, bool>("JobState", true),
+                new Tuple<string, bool>("AggregatedCounter", false),
+                new Tuple<string, bool>("List", false),
+                new Tuple<string, bool>("Set", false),
+                new Tuple<string, bool>("Hash", false),
+                new Tuple<string, bool>("Job", false)
+            };
+
+            foreach (var tuple in tablesToProcess)
             {
                 Logger.DebugFormat("Removing outdated records from table '{0}'...", tuple.Item1);
 
@@ -66,10 +66,10 @@ namespace Hangfire.Oracle.Core
 
                             using (new OracleDistributedLock(connection, DistributedLockKey, DefaultLockTimeout, cancellationToken).Acquire())
                             {
-                                var query = $"DELETE FROM {tuple.Item1} WHERE EXPIRE_AT < :NOW AND ROWNUM <= :COUNT";
+                                var query = $"DELETE FROM {T(tuple.Item1)} WHERE EXPIRE_AT < :NOW AND ROWNUM <= :COUNT";
                                 if (tuple.Item2)
                                 {
-                                    query = $"DELETE FROM {tuple.Item1} WHERE JOB_ID IN (SELECT ID FROM HF_JOB WHERE EXPIRE_AT < :NOW AND ROWNUM <= :COUNT)";
+                                    query = $"DELETE FROM {T(tuple.Item1)} WHERE JOB_ID IN (SELECT ID FROM {T("Job")} WHERE EXPIRE_AT < :NOW AND ROWNUM <= :COUNT)";
                                 }
                                 removedCount = connection.Execute(query, new { NOW = DateTime.UtcNow, COUNT = NumberOfRecordsInSinglePass });
                             }
