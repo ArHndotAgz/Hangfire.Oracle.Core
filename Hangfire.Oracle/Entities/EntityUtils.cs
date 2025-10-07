@@ -1,19 +1,18 @@
 ﻿using System.Data;
-
 using Dapper;
 
 namespace Hangfire.Oracle.Core.Entities
 {
     public static class EntityUtils
     {
-        public static long GetNextId(this IDbConnection connection)
+        public static long GetNextId(this IDbConnection connection, string sequenceName = "HF_SEQUENCE")
         {
-            return connection.QuerySingle<long>("SELECT HF_SEQUENCE.NEXTVAL FROM dual");
+            return connection.QuerySingle<long>($"SELECT {sequenceName}.NEXTVAL FROM dual");
         }
 
-        public static long GetNextJobId(this IDbConnection connection)
+        public static long GetNextJobId(this IDbConnection connection, string sequenceName = "HF_JOB_ID_SEQ")
         {
-            return connection.QuerySingle<long>("SELECT HF_JOB_ID_SEQ.NEXTVAL FROM dual");
+            return connection.QuerySingle<long>($"SELECT {sequenceName}.NEXTVAL FROM dual");
         }
     }
 }

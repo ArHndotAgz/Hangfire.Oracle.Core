@@ -1,9 +1,7 @@
 using System;
 using System.Data;
 using System.Threading;
-
 using Dapper;
-
 using Hangfire.Logging;
 
 namespace Hangfire.Oracle.Core
@@ -44,26 +42,29 @@ namespace Hangfire.Oracle.Core
 
         public string Resource { get; }
 
+        private string GetDistributedLockTable()
+        {
+            // Try to get from storage if available, otherwise use default
+            return _storage?.TableNameProvider?.GetTableName("DistributedLock") ?? "HF_DISTRIBUTED_LOCK";
+        }
+
         private int AcquireLock(string resource, TimeSpan timeout)
         {
-            return
-                _connection
-                    .Execute(
-                        @" 
-INSERT INTO HF_DISTRIBUTED_LOCK (""RESOURCE"", CREATED_AT)
-                (SELECT :RES, :NOW
-                FROM DUAL
-                WHERE NOT EXISTS
-            (SELECT ""RESOURCE"", CREATED_AT
-                FROM HF_DISTRIBUTED_LOCK
-                WHERE ""RESOURCE"" = :RES AND CREATED_AT > :EXPIRED))
-", 
-                        new
-                        {
-                            RES = resource,
-                            NOW = DateTime.UtcNow,
-                            EXPIRED = DateTime.UtcNow.Add(timeout.Negate())
-                        });
+            var tableName = GetDistributedLockTable();
+            return _connection.Execute(
+                $@"INSERT INTO {tableName} (""RESOURCE"", CREATED_AT)
+                   (SELECT :RES, :NOW
+                    FROM DUAL
+                    WHERE NOT EXISTS
+                        (SELECT ""RESOURCE"", CREATED_AT
+                         FROM {tableName}
+                         WHERE ""RESOURCE"" = :RES AND CREATED_AT > :EXPIRED))", 
+                new
+                {
+                    RES = resource,
+                    NOW = DateTime.UtcNow,
+                    EXPIRED = DateTime.UtcNow.Add(timeout.Negate())
+                });
         }
 
         public void Dispose()
@@ -107,16 +108,14 @@ INSERT INTO HF_DISTRIBUTED_LOCK (""RESOURCE"", CREATED_AT)
         {
             Logger.TraceFormat("Release resource={0}", Resource);
 
-            _connection
-                .Execute(
-                    @"
-DELETE FROM HF_DISTRIBUTED_LOCK 
- WHERE ""RESOURCE"" = :RES
-",
-                    new
-                    {
-                        RES = Resource
-                    });
+            var tableName = GetDistributedLockTable();
+            _connection.Execute(
+                $@"DELETE FROM {tableName} 
+                   WHERE ""RESOURCE"" = :RES",
+                new
+                {
+                    RES = Resource
+                });
         }
 
         public int CompareTo(object obj)

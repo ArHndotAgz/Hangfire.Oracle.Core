@@ -3,17 +3,16 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Text;
-
 using Dapper;
-
+using Hangfire;
 using Hangfire.Annotations;
 using Hangfire.Logging;
-using Hangfire.Oracle.Core.JobQueue;
-using Hangfire.Oracle.Core.Monitoring;
 using Hangfire.Server;
 using Hangfire.Storage;
-
 using Oracle.ManagedDataAccess.Client;
+using Hangfire.Oracle.Core.Configuration;
+using Hangfire.Oracle.Core.JobQueue;
+using Hangfire.Oracle.Core.Monitoring;
 
 namespace Hangfire.Oracle.Core
 {
@@ -27,6 +26,8 @@ namespace Hangfire.Oracle.Core
         private readonly OracleStorageOptions _options;
 
         public virtual PersistentJobQueueProviderCollection QueueProviders { get; private set; }
+        
+        public HangfireTableNameProvider TableNameProvider { get; private set; }
 
         public OracleStorage(string connectionString)
             : this(connectionString, new OracleStorageOptions())
@@ -50,6 +51,8 @@ namespace Hangfire.Oracle.Core
             }
 
             _options = options ?? throw new ArgumentNullException(nameof(options));
+            
+            InitializeTableNameProvider();
             PrepareSchemaIfNecessary(options);
 
             InitializeQueueProviders();
@@ -60,9 +63,21 @@ namespace Hangfire.Oracle.Core
             _connectionFactory = connectionFactory ?? throw new ArgumentNullException(nameof(connectionFactory));
 
             _options = options ?? throw new ArgumentNullException(nameof(options));
+            
+            InitializeTableNameProvider();
             PrepareSchemaIfNecessary(options);
 
             InitializeQueueProviders();
+        }
+
+        private void InitializeTableNameProvider()
+        {
+            var config = _options.InstanceConfiguration ?? new HangfireConfiguration();
+            
+            config.Tables = config.Tables ?? new Dictionary<string, string>();
+            config.Sequence = config.Sequence ?? new SequenceConfiguration();
+
+            TableNameProvider = new HangfireTableNameProvider(config);
         }
 
         private void PrepareSchemaIfNecessary(OracleStorageOptions options)
@@ -71,7 +86,7 @@ namespace Hangfire.Oracle.Core
             {
                 using (var connection = CreateAndOpenConnection())
                 {
-                    OracleObjectsInstaller.Install(connection, options.SchemaName);
+                    OracleObjectsInstaller.Install(connection, TableNameProvider);
                 }
             }
         }
@@ -91,7 +106,7 @@ namespace Hangfire.Oracle.Core
 
         public override void WriteOptionsToLog(ILog logger)
         {
-            logger.Info("Using the following options for SQL Server job storage:");
+            logger.Info("Using the following options for Oracle job storage:");
             logger.InfoFormat("    Queue poll interval: {0}.", _options.QueuePollInterval);
         }
 
@@ -170,7 +185,6 @@ namespace Hangfire.Oracle.Core
                 return true;
             }, null);
         }
-
         internal T UseTransaction<T>([InstantHandle] Func<IDbConnection, T> func, IsolationLevel? isolationLevel)
         {
             return UseConnection(connection =>
@@ -184,7 +198,6 @@ namespace Hangfire.Oracle.Core
                 }
             });
         }
-
         internal void UseConnection([InstantHandle] Action<IDbConnection> action)
         {
             UseConnection(connection =>
@@ -217,19 +230,20 @@ namespace Hangfire.Oracle.Core
             {
                 connection.Open();
 
-                if (!string.IsNullOrWhiteSpace(_options.SchemaName))
+                var schema = TableNameProvider.GetSchemaName();
+                if (!string.IsNullOrWhiteSpace(schema))
                 {
-                    connection.Execute($"ALTER SESSION SET CURRENT_SCHEMA={_options.SchemaName}");
+                    connection.Execute($"ALTER SESSION SET CURRENT_SCHEMA={schema}");
                 }
             }
 
             return connection;
         }
-
         internal void ReleaseConnection(IDbConnection connection)
         {
             connection?.Dispose();
         }
+        
         public void Dispose()
         {
         }

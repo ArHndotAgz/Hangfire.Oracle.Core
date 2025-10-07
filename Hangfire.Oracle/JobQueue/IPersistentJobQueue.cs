@@ -1,6 +1,5 @@
 using System.Data;
 using System.Threading;
-
 using Hangfire.Storage;
 
 namespace Hangfire.Oracle.Core.JobQueue

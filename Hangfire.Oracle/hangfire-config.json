@@ -1,0 +1,21 @@
+{
+  "SchemaName": "AHA",
+  "InstanceName": "AHA",
+  "Sequence": {
+    "PrimarySequenceName": "AHA_SEQUENCE",
+    "JobIdSequenceName": "AHA_JOB_ID_SEQ"
+  },
+  "Tables": {
+    "Job": "AHA_JOB",
+    "JobParameter": "AHA_JOB_PARAMETER",
+    "JobQueue": "AHA_JOB_QUEUE",
+    "JobState": "AHA_JOB_STATE",
+    "Server": "AHA_SERVER",
+    "Set": "AHA_SET",
+    "List": "AHA_LIST",
+    "Hash": "AHA_HASH",
+    "Counter": "AHA_COUNTER",
+    "AggregatedCounter": "AHA_AGGREGATED_COUNTER",
+    "DistributedLock": "AHA_DISTRIBUTED_LOCK"
+  }
+}
