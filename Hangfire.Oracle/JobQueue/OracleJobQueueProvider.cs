@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Kavosh.Hangfire.Oracle.Core.JobQueue
+namespace Hangfire.Oracle.Core.JobQueue
 {
     internal class OracleJobQueueProvider : IPersistentJobQueueProvider
     {

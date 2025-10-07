@@ -1,5 +1,6 @@
 {
   "SchemaName": "ESTCAD_FINAL",
+  "InstanceName": "AHA",
   "UseNationalCharacterSet": false,
   "Sequence": {
     "PrimarySequenceName": "AHA_SEQUENCE",

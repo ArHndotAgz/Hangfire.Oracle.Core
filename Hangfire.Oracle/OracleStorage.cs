@@ -9,12 +9,12 @@ using Hangfire.Annotations;
 using Hangfire.Logging;
 using Hangfire.Server;
 using Hangfire.Storage;
-using Kavosh.Hangfire.Oracle.Core.Configuration;
-using Kavosh.Hangfire.Oracle.Core.JobQueue;
-using Kavosh.Hangfire.Oracle.Core.Monitoring;
 using Oracle.ManagedDataAccess.Client;
+using Hangfire.Oracle.Core.Configuration;
+using Hangfire.Oracle.Core.JobQueue;
+using Hangfire.Oracle.Core.Monitoring;
 
-namespace Kavosh.Hangfire.Oracle.Core
+namespace Hangfire.Oracle.Core
 {
     public class OracleStorage : JobStorage, IDisposable
     {
@@ -72,9 +72,8 @@ namespace Kavosh.Hangfire.Oracle.Core
 
         private void InitializeTableNameProvider()
         {
-            var config = _options.Configuration ?? new HangfireConfiguration();
+            var config = _options.InstanceConfiguration ?? new HangfireConfiguration();
             
-            // Ensure all properties are initialized
             config.Tables = config.Tables ?? new Dictionary<string, string>();
             config.Sequence = config.Sequence ?? new SequenceConfiguration();
 
@@ -186,7 +185,6 @@ namespace Kavosh.Hangfire.Oracle.Core
                 return true;
             }, null);
         }
-
         internal T UseTransaction<T>([InstantHandle] Func<IDbConnection, T> func, IsolationLevel? isolationLevel)
         {
             return UseConnection(connection =>
@@ -200,7 +198,6 @@ namespace Kavosh.Hangfire.Oracle.Core
                 }
             });
         }
-
         internal void UseConnection([InstantHandle] Action<IDbConnection> action)
         {
             UseConnection(connection =>
@@ -242,7 +239,6 @@ namespace Kavosh.Hangfire.Oracle.Core
 
             return connection;
         }
-
         internal void ReleaseConnection(IDbConnection connection)
         {
             connection?.Dispose();

@@ -1,11 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<TargetFrameworks>netstandard2.0</TargetFrameworks>
-		<Title>Kavosh.Hangfire.Oracle.Core</Title>
+		<Title>RPK.Hangfire.Oracle.Core</Title>
 		<Summary>Kavosh's customized Hangfire Oracle storage with dynamic table naming and configurable data types</Summary>
 		<Description>Enterprise-ready Hangfire Oracle storage implementation with support for custom table names, configurable schemas, and Oracle data types (VARCHAR2/NVARCHAR2, CLOB/NCLOB). Forked from Hangfire.Oracle.Core with enhanced flexibility for corporate naming conventions and Persian language support.</Description>
-		<PackageId>Kavosh.Hangfire.Oracle.Core</PackageId>
-		<Product>Kavosh.Hangfire.Oracle.Core</Product>
+		<PackageId>RPK.Hangfire.Oracle.Core</PackageId>
+		<Product>RPK.Hangfire.Oracle.Core</Product>
 		<Company>Rayan Pardaz Kavosh</Company>
 		<Authors>Amirhossein Aghazadeh</Authors>
 		<Owners>Rayan Pardaz Kavosh</Owners>
@@ -31,7 +31,7 @@
 			- Enhanced documentation and configuration examples
 		</PackageReleaseNotes>
 		<PackageVersion>1.0.0</PackageVersion>
-		<PackageReadmeFile>README.Kavosh.md</PackageReadmeFile>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -44,7 +44,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<None Include="README.Kavosh.md" Pack="true" PackagePath="\" />
+		<None Include="README.md" Pack="true" PackagePath="\" />
 		<None Include="CONFIGURATION.md" Pack="true" PackagePath="docs\" />
 	</ItemGroup>
 </Project>

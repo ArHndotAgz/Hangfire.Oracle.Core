@@ -1,8 +1,8 @@
-	# Kavosh.Hangfire.Oracle.Core Configuration Guide
+	# RPK.Hangfire.Oracle.Core Configuration Guide
 
 ## Overview
 
-Kavosh.Hangfire.Oracle.Core supports dynamic table naming, schema configuration, custom Oracle data types, and configurable sequences. This allows you to adapt Hangfire to your organization's database naming conventions and requirements.
+RPK.Hangfire.Oracle.Core supports dynamic table naming, schema configuration, custom Oracle data types, and configurable sequences. This allows you to adapt Hangfire to your organization's database naming conventions and requirements.
 
 ## Table of Contents
 

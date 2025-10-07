@@ -1,8 +1,8 @@
-using Kavosh.Hangfire.Oracle.Core.Configuration;
+using Hangfire.Oracle.Core.Configuration;
 using System;
 using System.Data;
 
-namespace Kavosh.Hangfire.Oracle.Core
+namespace Hangfire.Oracle.Core
 {
     public class OracleStorageOptions
     {
@@ -18,6 +18,7 @@ namespace Kavosh.Hangfire.Oracle.Core
             DashboardJobListLimit = 50000;
             TransactionTimeout = TimeSpan.FromMinutes(1);
             InvisibilityTimeout = TimeSpan.FromMinutes(30);
+            InstanceConfiguration = null;
         }
 
         public IsolationLevel? TransactionIsolationLevel { get; set; }
@@ -51,6 +52,6 @@ namespace Kavosh.Hangfire.Oracle.Core
         [Obsolete("Does not make sense anymore. Background jobs re-queued instantly even after ungraceful shutdown now. Will be removed in 2.0.0.")]
         public TimeSpan InvisibilityTimeout { get; set; }
 
-        public HangfireConfiguration Configuration { get; set; }
+        public HangfireConfiguration InstanceConfiguration { get; set; }
     }
 }

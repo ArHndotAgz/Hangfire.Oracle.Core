@@ -1,7 +1,7 @@
 ﻿using System.Data;
 using Dapper;
 
-namespace Kavosh.Hangfire.Oracle.Core.Entities
+namespace Hangfire.Oracle.Core.Entities
 {
     public static class EntityUtils
     {

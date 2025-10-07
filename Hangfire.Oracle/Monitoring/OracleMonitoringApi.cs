@@ -5,13 +5,13 @@ using System.Linq;
 using Dapper;
 using Hangfire.Annotations;
 using Hangfire.Common;
+using Hangfire.Oracle.Core.Entities;
+using Hangfire.Oracle.Core.JobQueue;
 using Hangfire.States;
 using Hangfire.Storage;
 using Hangfire.Storage.Monitoring;
-using Kavosh.Hangfire.Oracle.Core.Entities;
-using Kavosh.Hangfire.Oracle.Core.JobQueue;
 
-namespace Kavosh.Hangfire.Oracle.Core.Monitoring
+namespace Hangfire.Oracle.Core.Monitoring
 {
     internal class OracleMonitoringApi : IMonitoringApi
     {
@@ -226,7 +226,7 @@ namespace Kavosh.Hangfire.Oracle.Core.Monitoring
                     Job = job,
                     Result = stateData.ContainsKey("Result") ? stateData["Result"] : null,
                     TotalDuration = stateData.ContainsKey("PerformanceDuration") && stateData.ContainsKey("Latency")
-                        ? (long?)long.Parse(stateData["PerformanceDuration"]) + (long?)long.Parse(stateData["Latency"])
+                        ? long.Parse(stateData["PerformanceDuration"]) + (long?)long.Parse(stateData["Latency"])
                         : null,
                     SucceededAt = JobHelper.DeserializeNullableDateTime(stateData["SucceededAt"])
                 }));

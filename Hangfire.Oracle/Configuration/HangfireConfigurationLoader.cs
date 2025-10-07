@@ -2,13 +2,10 @@ using System;
 using System.IO;
 using Newtonsoft.Json;
 
-namespace Kavosh.Hangfire.Oracle.Core.Configuration
+namespace Hangfire.Oracle.Core.Configuration
 {
     public static class HangfireConfigurationLoader
     {
-        /// <summary>
-        /// Loads Hangfire configuration from a JSON file
-        /// </summary>
         public static HangfireConfiguration LoadFromJson(string jsonFilePath)
         {
             if (string.IsNullOrWhiteSpace(jsonFilePath))
@@ -25,9 +22,6 @@ namespace Kavosh.Hangfire.Oracle.Core.Configuration
             return DeserializeFromJson(jsonContent);
         }
 
-        /// <summary>
-        /// Deserializes Hangfire configuration from JSON string
-        /// </summary>
         public static HangfireConfiguration DeserializeFromJson(string jsonContent)
         {
             if (string.IsNullOrWhiteSpace(jsonContent))
@@ -62,11 +56,9 @@ namespace Kavosh.Hangfire.Oracle.Core.Configuration
 
         private static void ValidateAndInitialize(HangfireConfiguration config)
         {
-            // Initialize if null
             config.Tables = config.Tables ?? new System.Collections.Generic.Dictionary<string, string>();
             config.Sequence = config.Sequence ?? new SequenceConfiguration();
 
-            // Validate table names
             foreach (var table in config.Tables)
             {
                 if (string.IsNullOrWhiteSpace(table.Value))

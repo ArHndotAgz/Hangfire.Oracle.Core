@@ -1,9 +1,8 @@
 using System.Data;
 using System.Threading;
-
 using Hangfire.Storage;
 
-namespace Kavosh.Hangfire.Oracle.Core.JobQueue
+namespace Hangfire.Oracle.Core.JobQueue
 {
     public interface IPersistentJobQueue
     {

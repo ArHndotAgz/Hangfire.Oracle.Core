@@ -1,6 +1,6 @@
-﻿# Kavosh.Hangfire.Oracle.Core
+﻿# RPK.Hangfire.Oracle.Core
 
-[![NuGet Version](https://img.shields.io/nuget/v/Kavosh.Hangfire.Oracle.Core.svg)](https://www.nuget.org/packages/Kavosh.Hangfire.Oracle.Core/)
+[![NuGet Version](https://img.shields.io/nuget/v/RPK.Hangfire.Oracle.Core.svg)](https://www.nuget.org/packages/RPK.Hangfire.Oracle.Core/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A customized and enhanced fork of **Hangfire.Oracle.Core** with support for **dynamic table naming**, **configurable schemas**, **custom Oracle data types**, and **full Persian language support**.

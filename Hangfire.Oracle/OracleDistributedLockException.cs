@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Kavosh.Hangfire.Oracle.Core
+namespace Hangfire.Oracle.Core
 {
     public class OracleDistributedLockException : Exception
     {

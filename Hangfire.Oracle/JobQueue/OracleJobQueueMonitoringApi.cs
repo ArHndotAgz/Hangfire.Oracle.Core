@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Dapper;
 
-namespace Kavosh.Hangfire.Oracle.Core.JobQueue
+namespace Hangfire.Oracle.Core.JobQueue
 {
     internal class OracleJobQueueMonitoringApi : IPersistentJobQueueMonitoringApi
     {

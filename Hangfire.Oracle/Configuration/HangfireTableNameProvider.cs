@@ -1,17 +1,17 @@
 using System.Collections.Generic;
 
-namespace Kavosh.Hangfire.Oracle.Core.Configuration
+namespace Hangfire.Oracle.Core.Configuration
 {
     public class HangfireTableNameProvider
     {
         private readonly HangfireConfiguration _config;
         private readonly Dictionary<string, string> _defaultTableNames;
+        private readonly string _instancePrefix;
 
         public HangfireTableNameProvider(HangfireConfiguration config)
         {
             _config = config ?? new HangfireConfiguration();
 
-            // Default Hangfire table names
             _defaultTableNames = new Dictionary<string, string>
             {
                 { "Job", "HF_JOB" },
@@ -26,17 +26,25 @@ namespace Kavosh.Hangfire.Oracle.Core.Configuration
                 { "AggregatedCounter", "HF_AGGREGATED_COUNTER" },
                 { "DistributedLock", "HF_DISTRIBUTED_LOCK" }
             };
+
+            _instancePrefix = DetermineInstancePrefix();
+        }
+
+        private string DetermineInstancePrefix()
+        {
+            if (!string.IsNullOrWhiteSpace(_config.InstanceName))
+            {
+                return _config.InstanceName.ToUpper();
+            }
+            return "HF";
         }
 
         public string GetTableName(string logicalName)
         {
-            // Try custom name first
             if (_config.Tables != null && _config.Tables.TryGetValue(logicalName, out var customName))
             {
                 return customName;
             }
-
-            // Fallback to default
             return _defaultTableNames.TryGetValue(logicalName, out var defaultName) ? defaultName : logicalName;
         }
 
@@ -65,6 +73,28 @@ namespace Kavosh.Hangfire.Oracle.Core.Configuration
         public string GetJobIdSequenceName()
         {
             return _config.Sequence?.JobIdSequenceName ?? "HF_JOB_ID_SEQ";
+        }
+
+        public string GetInstancePrefix()
+        {
+            return _instancePrefix;
+        }
+
+        public string GetConstraintName(string tableName, string constraintType)
+        {
+            return $"{_instancePrefix}_{constraintType}_{ShortenTableName(tableName)}";
+        }
+
+        public string GetIndexName(string tableName, string indexType = "IDX")
+        {
+            return $"{_instancePrefix}_{indexType}_{ShortenTableName(tableName)}";
+        }
+
+        private string ShortenTableName(string tableName)
+        {
+            var name = tableName.Replace($"{_instancePrefix}_", "").Replace("HF_", "");
+
+            return name.Length > 20 ? name.Substring(0, 20) : name;
         }
     }
 }
