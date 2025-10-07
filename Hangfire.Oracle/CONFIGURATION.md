@@ -1,22 +1,50 @@
-	# RPK.Hangfire.Oracle.Core Configuration Guide
+﻿# 📖 RPK.Hangfire.Oracle.Core - Complete Configuration Guide
 
-## Overview
+<div align="center">
 
-RPK.Hangfire.Oracle.Core supports dynamic table naming, schema configuration, custom Oracle data types, and configurable sequences. This allows you to adapt Hangfire to your organization's database naming conventions and requirements.
+**Enterprise-Ready Oracle Storage for Hangfire**
 
-## Table of Contents
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![.NET Standard 2.0](https://img.shields.io/badge/.NET%20Standard-2.0-blue.svg)](https://docs.microsoft.com/en-us/dotnet/standard/net-standard)
+[![Oracle 11g+](https://img.shields.io/badge/Oracle-11g%2B-red.svg)](https://www.oracle.com/database/)
 
-1. [Basic Configuration](#basic-configuration)
-2. [Table Name Customization](#table-name-customization)
-3. [Schema Configuration](#schema-configuration)
-4. [Data Type Configuration](#data-type-configuration)
-5. [Sequence Configuration](#sequence-configuration)
-6. [Complete JSON Example](#complete-json-example)
-7. [Programmatic Configuration](#programmatic-configuration)
-8. [Persian Language Support](#persian-language-support)
+By **Rayan Pardaz Kavosh** | Author: **Amirhossein Aghazadeh**
+
+</div>
 
 ---
 
-## Basic Configuration
+## 📋 Table of Contents
 
-### Minimal Setup
+### Getting Started
+- [🚀 Quick Start](#-quick-start)
+- [🎯 When to Use Custom Configuration](#-when-to-use-custom-configuration)
+- [⚙️ Default Behavior (No Configuration)](#️-default-behavior-no-configuration)
+
+### Core Configuration
+- [📁 Schema Configuration](#-schema-configuration)
+- [📊 Table Name Customization](#-table-name-customization)
+- [🔢 Sequence Configuration](#-sequence-configuration)
+- [🏢 Instance Name Configuration](#-instance-name-configuration)
+- [🌐 Character Set Configuration](#-character-set-configuration)
+
+### Implementation Guides
+- [📝 JSON Configuration Method](#-json-configuration-method)
+- [💻 Programmatic Configuration Method](#-programmatic-configuration-method)
+- [🔄 Multiple Instances Setup](#-multiple-instances-setup)
+
+### Advanced Topics
+- [🌍 Persian/Farsi Language Support](#-persianfarsi-language-support)
+- [🏗️ Enterprise Scenarios](#️-enterprise-scenarios)
+- [🔍 Troubleshooting](#-troubleshooting)
+- [✅ Best Practices](#-best-practices)
+
+### Reference
+- [📚 Configuration Reference](#-configuration-reference)
+- [🗂️ Complete Examples](#️-complete-examples)
+
+---
+
+## 🚀 Quick Start
+
+### Installation
